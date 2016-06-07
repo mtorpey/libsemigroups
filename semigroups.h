@@ -909,7 +909,9 @@ class Semigroup {
             std::cout << ", so far" << std::endl;
           } else {
             std::cout << ", finished!" << std::endl;
-            timer.stop();
+            if (report) {
+              timer.stop();
+            }
           }
 
         }
@@ -1228,6 +1230,7 @@ class Semigroup {
     std::vector<size_t>                      _suffix;
     Element*                                 _tmp_product;
     size_t                                   _wordlen;
+
 
 
 
