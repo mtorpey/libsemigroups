@@ -711,6 +711,7 @@ class Semigroup {
           pos = _suffix.at(pos);
         }
       }
+      //FIXME who deletes this???
       return word;
     }
 
@@ -739,7 +740,7 @@ class Semigroup {
         enumerate(-1, report);
       }
 
-      relation.clear();
+      relation.clear(); // FIXME use an array instead since this has fixed size
 
       if (_relation_pos == _nr) { //no more relations
         return;
