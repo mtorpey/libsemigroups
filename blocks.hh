@@ -47,7 +47,7 @@ class Blocks {
     {
       _nr_blocks = *(std::max_element(_blocks->begin(),
                                       _blocks->end())) + 1;
-      assert(blocks->size() != 0);
+      assert(_blocks->size() != 0);
       assert(_nr_blocks == _lookup->size());
     }
 
@@ -59,16 +59,26 @@ class Blocks {
       _nr_blocks(nr_blocks),
       _rank(UNDEFINED)
     {
-      assert(blocks->size() != 0);
+      assert(_blocks->size() != 0);
       assert(_nr_blocks == _lookup->size());
     }
 
     Blocks& operator= (Blocks const&) = delete;
+
     Blocks (Blocks const& copy) :
-      _blocks(new std::vector<u_int32_t>(*copy._blocks)),
-      _lookup(new std::vector<bool>(*copy._lookup)),
+      _blocks(nullptr),
+      _lookup(nullptr),
       _nr_blocks(copy._nr_blocks),
-      _rank(copy._rank) {}
+      _rank(copy._rank) {
+
+        if (copy._blocks != nullptr) {
+          assert(copy._lookup != nullptr);
+          _blocks = new std::vector<u_int32_t>(*copy._blocks);
+          _lookup = new std::vector<bool>(*copy._lookup);
+        } else {
+          assert(copy._lookup == nullptr);
+        }
+      }
 
     ~Blocks () {
       delete _blocks;
@@ -158,7 +168,7 @@ class Blocks {
     inline typename std::vector<u_int32_t>::iterator end () const {
       return _blocks->end();
     }
-
+    //FIXME remove the next two use lookup()->begin()/end instead
     inline typename std::vector<bool>::iterator lookup_begin () const {
       return _lookup->begin();
     }
