@@ -2,7 +2,7 @@ SOURCES = $(wildcard *.cc)
 HEADERS = $(wildcard *.h)
 
 OBJECTS = ${SOURCES:.cc=.o}
-CXXFLAGS = -I. -fPIC -Wno-c++11-extensions
+CXXFLAGS = -I. -fPIC -Wno-c++11-extensions -std=c++11
 
 COMMON_DOC_FLAGS = --report --merge docs --output html $(SOURCES) $(HEADERS)
 
