@@ -5,6 +5,6 @@
  *
  *******************************************************************************/
 
-#include "blocks.hh"
+#include "blocks.h"
 
 u_int32_t Blocks::UNDEFINED = -1;

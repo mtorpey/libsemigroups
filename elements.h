@@ -16,7 +16,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "semiring.h"
-#include "blocks.hh"
+#include "blocks.h"
 
 #include <assert.h>
 #include <functional>

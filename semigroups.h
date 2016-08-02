@@ -18,7 +18,7 @@
 
 #include "recvec.h"
 #include "elements.h"
-#include "timer.hh"
+#include "timer.h"
 
 #include <algorithm>
 #include <unordered_map>
