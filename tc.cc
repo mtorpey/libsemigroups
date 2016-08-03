@@ -99,9 +99,9 @@ Congruence::Congruence (cong_t                         type,
     _active += semigroup->size();
 
     if (type == LEFT) {
-      _table.adjoin(*semigroup->left_cayley_graph(_report));
+      _table.append(*semigroup->left_cayley_graph(_report));
     } else {
-      _table.adjoin(*semigroup->right_cayley_graph(_report));
+      _table.append(*semigroup->right_cayley_graph(_report));
     }
 
     for (auto it = _table.begin(); it < _table.end(); it++) {
