@@ -8,13 +8,9 @@
 // TODO
 // 0) move the methods to the cc file
 // 1) the other functionality of Semigroupe.
-// 2) remove templates as far as possible.
 
-#ifndef SEMIGROUPS_H
-#define SEMIGROUPS_H
-
-//#define NDEBUG
-//#define DEBUG
+#ifndef SEMIGROUPS_H_
+#define SEMIGROUPS_H_
 
 #include "recvec.h"
 #include "elements.h"
@@ -26,8 +22,10 @@
 #include <assert.h>
 #include <iostream>
 
-typedef RecVec<size_t>       CayleyGraph;
-typedef std::vector<size_t>  Word;
+typedef size_t                    letter_t;
+typedef std::vector<letter_t>     word_t;
+typedef std::pair<word_t, word_t> relation_t;
+typedef RecVec<size_t>            cayley_graph_t;
 
 class Semigroup {
 
@@ -69,7 +67,7 @@ class Semigroup {
       _gens          (new std::vector<Element*>()),
       _genslookup    (),
       _index         (),
-      _left          (new CayleyGraph(gens->size())),
+      _left          (new cayley_graph_t(gens->size())),
       _length        (),
       _lenindex      (),
       _map           (),
@@ -84,7 +82,7 @@ class Semigroup {
       _reduced       (gens->size()),
       _relation_gen  (0),
       _relation_pos  (-1),
-      _right         (new CayleyGraph(gens->size())),
+      _right         (new cayley_graph_t(gens->size())),
       _sorted        (nullptr),
       _pos_sorted    (nullptr),
       _suffix        (),
@@ -141,7 +139,7 @@ class Semigroup {
         _genslookup    (copy._genslookup),
         _id            (copy._id->really_copy()),
         _index         (copy._index),
-        _left          (new CayleyGraph(*copy._left)),
+        _left          (new cayley_graph_t(*copy._left)),
         _length        (copy._length),
         _lenindex      (copy._lenindex),
         _multiplied    (copy._multiplied),
@@ -155,7 +153,7 @@ class Semigroup {
         _reduced       (copy._reduced),
         _relation_gen  (copy._relation_gen),
         _relation_pos  (copy._relation_pos),
-        _right         (new CayleyGraph(*copy._right)),
+        _right         (new cayley_graph_t(*copy._right)),
         _sorted        (nullptr),
         _pos_sorted    (nullptr),
         _suffix        (copy._suffix),
@@ -186,7 +184,7 @@ class Semigroup {
         _found_one      (copy._found_one), // copy in case degree doesn't change in add_generators
         _gens           (new std::vector<Element*>()),
         _genslookup     (copy._genslookup),
-        _left           (new CayleyGraph(*copy._left)),
+        _left           (new cayley_graph_t(*copy._left)),
         _multiplied     (copy._multiplied),
         _nr             (copy._nr),
         _nrgens         (copy._nrgens),
@@ -197,7 +195,7 @@ class Semigroup {
         _reduced        (copy._reduced),
         _relation_gen   (0),
         _relation_pos   (-1),
-        _right          (new CayleyGraph(*copy._right)),
+        _right          (new cayley_graph_t(*copy._right)),
         _sorted         (nullptr),
         _pos_sorted     (nullptr),
         _wordlen        (0)
@@ -685,7 +683,7 @@ class Semigroup {
      *
     *******************************************************************************/
 
-    CayleyGraph* right_cayley_graph (bool report = true) {
+    cayley_graph_t* right_cayley_graph (bool report = true) {
       enumerate(-1, report);
       return _right;
     }
@@ -694,7 +692,7 @@ class Semigroup {
      *
     *******************************************************************************/
 
-    CayleyGraph* left_cayley_graph (bool report = true) {
+    cayley_graph_t* left_cayley_graph (bool report = true) {
       enumerate(-1, report);
       return _left;
     }
@@ -703,9 +701,9 @@ class Semigroup {
      * factorization: returns the minimum word equal to _elements.at(pos).
     *******************************************************************************/
 
-    Word* factorisation (size_t pos, bool report = true) {
+    word_t* factorisation (size_t pos, bool report = true) {
 
-      Word* word = new Word();
+      word_t* word(new word_t());
       if (pos > _nr && !is_done()) {
         enumerate(pos, report);
       }
@@ -1212,7 +1210,7 @@ class Semigroup {
     std::vector<size_t>                      _genslookup;
     Element*                                 _id;
     std::vector<size_t>                      _index;
-    CayleyGraph*                             _left;
+    cayley_graph_t*                             _left;
     std::vector<size_t>                      _length;
     std::vector<size_t>                      _lenindex;
     std::unordered_map<const Element*,
@@ -1230,7 +1228,7 @@ class Semigroup {
     Flags                                    _reduced;
     size_t                                   _relation_gen;
     size_t                                   _relation_pos;
-    CayleyGraph*                             _right;
+    cayley_graph_t*                          _right;
     std::vector<std::pair<Element*, size_t> >* _sorted;
     std::vector<size_t>*                     _pos_sorted;
     std::vector<size_t>                      _suffix;

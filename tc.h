@@ -18,36 +18,30 @@
 #include "elements.h"
 #include "semigroups.h"
 
-typedef size_t                    letter_t;
-typedef std::vector<letter_t>     word_t;
-typedef std::pair<word_t, word_t> relation_t;
-
-enum cong_t {
-  LEFT     = 0,
-  RIGHT    = 1,
-  TWOSIDED = 2
-};
 
 class Congruence {
+
+  enum cong_t {
+    LEFT     = 0,
+    RIGHT    = 1,
+    TWOSIDED = 2
+  };
 
  typedef size_t                    coset_t;
  typedef int64_t                   signed_coset_t;
 
  public:
-  Congruence (cong_t,
+  Congruence (std::string,
               size_t,
               std::vector<relation_t> const&,
               std::vector<relation_t> const&,
               size_t thread_id = 1);
 
-  Congruence (cong_t,
+  Congruence (std::string,
               Semigroup*,
               std::vector<relation_t> const&,
               bool,
               size_t thread_id = 1);
-
-  // FIXME remove this, it's for testing only
-  explicit Congruence (Semigroup*);
 
   void todd_coxeter (size_t limit = INFTY);
 
@@ -64,10 +58,24 @@ class Congruence {
   void set_report (bool);
 
  private:
+
+  Congruence (cong_t,
+              size_t,
+              std::vector<relation_t> const&,
+              std::vector<relation_t> const&,
+              size_t thread_id = 1);
+
+  Congruence (cong_t,
+              Semigroup*,
+              std::vector<relation_t> const&,
+              bool,
+              size_t thread_id = 1);
+
   void new_coset(coset_t const&, letter_t const&);
   void identify_cosets(coset_t, coset_t);
   inline void trace(coset_t const&, relation_t const&, bool add = true);
   void check_forwd();
+  cong_t type_from_string (std::string);
 
   cong_t                       _type;
 
@@ -159,7 +167,7 @@ class Congruence {
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-Congruence* finite_cong_enumerate (cong_t,
+Congruence* finite_cong_enumerate (std::string,
                                    Semigroup*,
                                    std::vector<relation_t> const&,
                                    bool report = false);

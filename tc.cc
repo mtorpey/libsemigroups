@@ -19,6 +19,29 @@ std::mutex Congruence::_report_mtx;
     << str << std::endl; \
   _report_mtx.unlock();
 
+Congruence::cong_t Congruence::type_from_string (std::string type_str) {
+  if (type_str == "left") {
+      return cong_t::LEFT;
+  } else if (type_str == "right") {
+      return cong_t::RIGHT;
+  } else if (type_str == "twosided") {
+      return cong_t::TWOSIDED;
+  } else {
+    assert(false);
+  }
+}
+
+Congruence::Congruence (std::string                    type_str,
+                        size_t                         nrgens,
+                        std::vector<relation_t> const& relations,
+                        std::vector<relation_t> const& extra,
+                        size_t                         thread_id) :
+  Congruence(type_from_string(type_str),
+             nrgens,
+             relations,
+             extra,
+             thread_id) { }
+
 Congruence::Congruence (cong_t                         type,
                         size_t                         nrgens,
                         // TODO default these to empty vectors
@@ -79,9 +102,16 @@ Congruence::Congruence (cong_t                         type,
     }
 }
 
-// FIXME remove this, it's for testing only
-Congruence::Congruence (Semigroup* semigroup) :
-  Congruence(TWOSIDED, semigroup, std::vector<relation_t>(), false) {}
+Congruence::Congruence (std::string                    type_str,
+                        Semigroup*                     semigroup,
+                        std::vector<relation_t> const& extra,
+                        bool                           use_known,
+                        size_t                         thread_id) :
+  Congruence(type_from_string(type_str),
+             semigroup,
+             extra,
+             use_known,
+             thread_id) { }
 
 Congruence::Congruence (cong_t                         type,
                         Semigroup*                     semigroup,
@@ -583,7 +613,7 @@ bool Congruence::is_tc_done () {
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-Congruence* finite_cong_enumerate (cong_t type,
+Congruence* finite_cong_enumerate (std::string type,
                                    Semigroup* S,
                                    std::vector<relation_t> const& extra,
                                    bool report) {
