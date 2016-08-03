@@ -17,14 +17,23 @@
 #include <iostream>
 #include <chrono>
 
+//
+// This is a simple class to which can be used to send timing information to
+// the standard output.
+
 class Timer {
 
   typedef std::chrono::duration<long long int, std::nano>  nano_t;
   typedef std::chrono::steady_clock::time_point            time_point_t;
 
  public:
+    // Default constructor
     Timer () : _start(), _running(false) {}
 
+    // Start the timer
+    //
+    // This starts the timer running if it is not already running. If it is
+    // already running, then we **assert(false)**.
     void start () {
       if (!_running) {
         _running = true;
@@ -34,11 +43,25 @@ class Timer {
       }
     }
 
+    // Stop the timer
+    // @str prepend this to the printed statement (defaults to "")
+    //
+    // Stops the timer regardless of its state, and calls <print> with the
+    // argument **str**.
     void stop (std::string str = "") {
       print(str);
       _running = false;
     }
 
+    // Print elapsed time
+    // @str prepend this to the printed statement (defaults to "")
+    //
+    // If the timer is running, then this prints the time elapsed since
+    // <start> was called. The format of the returned value is
+    // "Elapsed time = " followed by the time in some (hopefully) human
+    // readable format.
+    //
+    // If the timer is not already running, then we **assert(false)**.
     void print (std::string str = "") {
       if (_running) {
         time_point_t end     = std::chrono::steady_clock::now();
