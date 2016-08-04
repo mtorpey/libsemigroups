@@ -704,18 +704,23 @@ class Semigroup {
     word_t* factorisation (size_t pos, bool report = true) {
 
       word_t* word(new word_t());
+      factorisation(*word, pos, report);
+      return word;
+      //FIXME who deletes this???
+    }
+
+    void factorisation (word_t& word, size_t pos, bool report = true) {
+
       if (pos > _nr && !is_done()) {
         enumerate(pos, report);
       }
 
       if (pos < _nr) {
         while (pos != (size_t) -1) {
-          word->push_back(_first.at(pos));
+          word.push_back(_first.at(pos));
           pos = _suffix.at(pos);
         }
       }
-      //FIXME who deletes this???
-      return word;
     }
 
     /*******************************************************************************
@@ -1234,9 +1239,6 @@ class Semigroup {
     std::vector<size_t>                      _suffix;
     Element*                                 _tmp_product;
     size_t                                   _wordlen;
-
-
-
 
 };
 
