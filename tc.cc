@@ -610,6 +610,45 @@ bool Congruence::is_tc_done () {
   return _tc_done;
 }
 
+// compress the table
+
+void Congruence::compress () {
+  if (! is_tc_done()) {
+    todd_coxeter();
+  }
+
+  RecVec<coset_t> table(_nrgens, _active);
+
+  coset_t pos = _id_coset;
+  // old number to new numbers lookup
+  std::unordered_map<coset_t, coset_t> lookup;
+  lookup.insert(std::make_pair(_id_coset, 0));
+
+  size_t next_index = 1;
+  size_t curr_index = 0;
+
+  while (pos != _next) {
+    // copy row
+    for (size_t i = 0; i < _nrgens; i++) {
+      coset_t val = _table.get(pos, i);
+      auto it = lookup.find(val);
+      if (it == lookup.end()) {
+        lookup.insert(std::make_pair(val, next_index));
+        val = next_index;
+        next_index++;
+      } else {
+        val = it->second;
+      }
+      table.set(curr_index, i, val);
+    }
+    curr_index++;
+    pos = _forwd[pos];
+  }
+
+  _table = table;
+
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 

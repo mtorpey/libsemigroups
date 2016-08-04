@@ -18,7 +18,6 @@
 #include "elements.h"
 #include "semigroups.h"
 
-
 class Congruence {
 
   enum cong_t {
@@ -45,8 +44,6 @@ class Congruence {
 
   void todd_coxeter (size_t limit = INFTY);
 
-  //void todd_coxeter_finite ();
-
   size_t nr_active_cosets () {
     return _active;
   }
@@ -56,6 +53,7 @@ class Congruence {
   void terminate ();
   bool is_tc_done ();
   void set_report (bool);
+  void compress ();
 
  private:
 
