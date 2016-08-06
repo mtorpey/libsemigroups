@@ -13,6 +13,8 @@ doc:
 static-doc:
 	@echo "Generating static documentation..."; \
 	cldoc generate $(CXXFLAGS) -- --static $(COMMON_DOC_FLAGS)
+	@echo "Fixing some bugs in cldoc..."; \
+	python docs/cldoc-fix
 
 serve:
 	cldoc serve html
