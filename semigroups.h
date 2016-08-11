@@ -15,13 +15,13 @@
 #include <assert.h>
 
 #include <algorithm>
-#include <iostream>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
 #include "elements.h"
 #include "recvec.h"
-#include "timer.h"
+#include "report.h"
 
 typedef size_t                letter_t;
 typedef std::vector<letter_t> word_t;
@@ -87,7 +87,8 @@ class Semigroup {
         _sorted(nullptr),
         _pos_sorted(nullptr),
         _suffix(),
-        _wordlen(0) // (length of the current word) - 1
+        _wordlen(0), // (length of the current word) - 1
+        _reporter(*this)
   {
     assert(_nrgens != 0);
 
@@ -807,15 +808,14 @@ class Semigroup {
   *******************************************************************************/
 
   void enumerate(size_t limit, bool report) {
-    if (_pos >= _nr || limit <= _nr)
+    if (_pos >= _nr || limit <= _nr) {
       return;
-    limit = std::max(limit, _nr + _batch_size);
-    Timer timer;
-    if (report) {
-      std::cout << "semigroups++: enumerate" << std::endl;
-      std::cout << "limit = " << limit << std::endl;
-      timer.start();
     }
+    limit = std::max(limit, _nr + _batch_size);
+
+    _reporter.report(report);
+    _reporter.start_timer();
+    _reporter(__func__) << "limit = " << limit << std::endl;
 
     // multiply the generators by every generator
     if (_pos < _lenindex.at(1)) {
@@ -920,18 +920,16 @@ class Semigroup {
         _wordlen++;
         _lenindex.push_back(_index.size());
       }
-      if (report) {
-        std::cout << "found " << _nr << " elements, ";
-        std::cout << _nrrules << " rules, ";
-        std::cout << "max word length " << current_max_word_length();
-        if (!is_done()) {
-          std::cout << ", so far" << std::endl;
-        } else {
-          std::cout << ", finished!" << std::endl;
-          if (report) {
-            timer.stop();
-          }
-        }
+
+      _reporter(__func__) << "found " << _nr << " elements, " << _nrrules
+                          << " rules, max word length "
+                          << current_max_word_length();
+
+      if (!is_done()) {
+        _reporter << ", so far" << std::endl;
+      } else {
+        _reporter << ", finished!" << std::endl;
+        _reporter.stop_timer();
       }
     }
   }
@@ -1242,6 +1240,8 @@ class Semigroup {
   std::vector<size_t>  _suffix;
   Element*             _tmp_product;
   size_t               _wordlen;
+
+  Reporter             _reporter;
 };
 
 #endif // SEMIGROUPS_H_

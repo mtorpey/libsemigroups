@@ -9,15 +9,9 @@
 
 #include <thread>
 
-size_t     Congruence::INFTY     = -1;
-size_t     Congruence::UNDEFINED = -1;
-std::mutex Congruence::_report_mtx;
-
-#define REPORT(str)                                                            \
-  _report_mtx.lock();                                                          \
-  std::cout << "Thread #" << _thread_id << ": " << __func__ << ": " << str     \
-            << std::endl;                                                      \
-  _report_mtx.unlock();
+size_t   Congruence::INFTY     = -1;
+size_t   Congruence::UNDEFINED = -1;
+Reporter Congruence::_reporter;
 
 Congruence::cong_t Congruence::type_from_string(std::string type_str) {
   if (type_str == "left") {
@@ -400,14 +394,12 @@ void Congruence::trace(coset_t const& c, relation_t const& rel, bool add) {
   // Statistics and packing
   _next_report++;
   if (_next_report > 4000000) {
-    if (_report) {
-      REPORT(_defined << " defined, " << _forwd.size() << " max, " << _active
-                      << " active, "
-                      << (_defined - _active) - _killed
-                      << " killed, "
-                      << "current "
-                      << (add ? _current : _current_no_add));
-    }
+    _reporter.lock();
+    _reporter(__func__, _thread_id)
+        << _defined << " defined, " << _forwd.size() << " max, " << _active
+        << " active, " << (_defined - _active) - _killed << " killed, "
+        << "current " << (add ? _current : _current_no_add) << std::endl;
+    _reporter.unlock();
     // If we are killing cosets too slowly, then stop packing
     if ((_defined - _active) - _killed < 100) {
       _stop_packing = true;
@@ -465,7 +457,8 @@ void Congruence::trace(coset_t const& c, relation_t const& rel, bool add) {
 //
 void Congruence::todd_coxeter(size_t limit) {
 
-  // TODO this should be put into a method that is only called once
+  _reporter.report(_report);
+  _reporter.set_class_name(*this);
 
   // If we have already run this before, then we are done
   if (_tc_done || _is_compressed) {
@@ -491,16 +484,15 @@ void Congruence::todd_coxeter(size_t limit) {
 
     // If the number of active cosets is too high, start a packing phase
     if (_active > _pack) {
-      if (_report) {
-        REPORT(_defined << " defined, " << _forwd.size() << " max, " << _active
-                        << " active, "
-                        << (_defined - _active) - _killed
-                        << " killed, "
-                        << "current "
-                        << _current);
-        REPORT("Entering lookahead phase . . .");
-        _killed = _defined - _active;
-      }
+      _reporter.lock();
+      _reporter(__func__, _thread_id)
+          << _defined << " defined, " << _forwd.size() << " max, " << _active
+          << " active, " << (_defined - _active) - _killed << " killed, "
+          << "current " << _current << std::endl;
+      _reporter(__func__, _thread_id) << "Entering lookahead phase . . ."
+                                      << std::endl;
+      _reporter.unlock();
+      _killed = _defined - _active;
 
       size_t oldactive = _active;  // Keep this for stats
       _current_no_add  = _current; // Start packing from _current
@@ -518,9 +510,11 @@ void Congruence::todd_coxeter(size_t limit) {
           return;
         }
       } while (_current_no_add != _next && !_stop_packing);
-      if (_report) {
-        REPORT("Lookahead phase complete " << oldactive - _active << " killed");
-      }
+      _reporter.lock();
+      _reporter(__func__, _thread_id) << "Lookahead phase complete "
+                                      << oldactive - _active << " killed"
+                                      << std::endl;
+      _reporter.unlock();
       _pack += _pack / 10; // Raise packing threshold 10%
       _stop_packing   = false;
       _current_no_add = UNDEFINED;
@@ -536,14 +530,11 @@ void Congruence::todd_coxeter(size_t limit) {
   } while (_current != _next);
 
   // Final report
-  if (_report) {
-    REPORT(_defined << " cosets defined,"
-                    << " maximum "
-                    << _forwd.size()
-                    << _active
-                    << " survived");
-  }
-
+  _reporter.lock();
+  _reporter(__func__, _thread_id) << _defined << " cosets defined,"
+                                  << " maximum " << _forwd.size() << ", "
+                                  << _active << " survived" << std::endl;
+  _reporter.unlock();
   _tc_done = true;
 
   // No return value: all info is now stored in the class
@@ -638,10 +629,9 @@ void Congruence::compress() {
 
 Congruence* compete(Congruence* cong_t, Congruence* cong_f, bool report) {
 
-  Timer timer;
-  if (report) {
-    timer.start();
-  }
+  Reporter reporter;
+  reporter.report(report);
+  reporter.start_timer();
 
   cong_t->set_report(report);
   cong_f->set_report(report);
@@ -657,23 +647,17 @@ Congruence* compete(Congruence* cong_t, Congruence* cong_f, bool report) {
   thread_t.join();
   thread_f.join();
 
-  if (report) {
-    timer.stop(std::string(__func__) + ": ");
-  }
-
   if (cong_t->is_tc_done()) {
-    if (report) {
-      std::cout << __func__ << ": Using the Cayley graph (Thread #1) won!"
-                << std::endl;
-    }
+    reporter(__func__) << "Using the Cayley graph (Thread #1) won!"
+                       << std::endl;
+    reporter.stop_timer();
     delete cong_f;
     return cong_t;
   } else {
     assert(cong_f->is_tc_done());
-    if (report) {
-      std::cout << __func__ << ": Not using the Cayley graph (Thread #2) won!"
-                << std::endl;
-    }
+    reporter(__func__) << "Not using the Cayley graph (Thread #2) won!"
+                       << std::endl;
+    reporter.stop_timer();
     delete cong_t;
     return cong_f;
   }

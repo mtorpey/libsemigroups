@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "elements.h"
+#include "report.h"
 #include "semigroups.h"
 
 class Congruence {
@@ -39,6 +40,8 @@ class Congruence {
              std::vector<relation_t> const&,
              bool,
              size_t thread_id = 0);
+
+  ~Congruence() {}
 
   void todd_coxeter(size_t limit = INFTY);
 
@@ -162,9 +165,10 @@ class Congruence {
 
   size_t _thread_id;
 
+
   static size_t     INFTY;
   static size_t     UNDEFINED;
-  static std::mutex _report_mtx;
+  static Reporter   _reporter;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
