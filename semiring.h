@@ -5,11 +5,12 @@
  *
  */
 
-#ifndef SEMIGROUPS_SEMIRING_H
-#define SEMIGROUPS_SEMIRING_H
+#ifndef SEMIRING_H_
+#define SEMIRING_H_
+
+#include <limits.h>
 
 #include <algorithm>
-#include <limits.h>
 
 // Namespace for containing everything related to the class <Semiring>.
 
@@ -38,7 +39,7 @@ namespace semiring {
   class Semiring {
 
    public:
-    virtual ~Semiring(){};
+    virtual ~Semiring() {}
 
     // Semiring multiplicative identity.
     // Method for finding the multiplicative identity, or one, of the
@@ -144,7 +145,7 @@ namespace semiring {
     // Default constructor.
     // @n the size of the finite field, this must be a prime number but this
     // is not checked.
-    PrimeField(long n) : Semiring(), _n(n) {}
+    explicit PrimeField(long n) : Semiring(), _n(n) {}
 
     // Semiring multiplicative identity.
     // This method returns the multiplicative identity, or one, of the prime
@@ -305,7 +306,8 @@ namespace semiring {
     // Default constructor.
     // @threshold the largest integer in the semiring (or equivalently the
     // size of the semiring minus 2).
-    TropicalSemiring(long threshold) : Semiring(), _threshold(threshold) {}
+    explicit TropicalSemiring(long threshold)
+        : Semiring(), _threshold(threshold) {}
 
     // Threshold of a tropical semiring.
     // This is the largest non-negative integer in the semiring, called the
@@ -331,7 +333,8 @@ namespace semiring {
     // Default constructor.
     // @threshold the largest integer in the semiring (or equivalently the
     // size of the semiring minus 2).
-    TropicalMaxPlusSemiring(long threshold) : TropicalSemiring(threshold) {}
+    explicit TropicalMaxPlusSemiring(long threshold)
+        : TropicalSemiring(threshold) {}
 
     // Semiring multiplicative identity.
     // This method returns the multiplicative identity, or one, of the
@@ -386,7 +389,8 @@ namespace semiring {
     // Default constructor.
     // @threshold the largest integer in the semiring (or equivalently the
     // size of the semiring minus 2).
-    TropicalMinPlusSemiring(long threshold) : TropicalSemiring(threshold) {}
+    explicit TropicalMinPlusSemiring(long threshold)
+        : TropicalSemiring(threshold) {}
 
     // Semiring multiplicative identity.
     // This method returns the multiplicative identity, or one, of the
@@ -517,5 +521,5 @@ namespace semiring {
     long _threshold;
     long _period;
   };
-}
-#endif
+} // namespace semiring
+#endif // SEMIRING_H_
