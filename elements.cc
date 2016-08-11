@@ -14,15 +14,15 @@
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-size_t BooleanMat::complexity () const {
+size_t BooleanMat::complexity() const {
   return pow(this->degree(), 3);
 }
 
-size_t BooleanMat::degree () const {
+size_t BooleanMat::degree() const {
   return sqrt(_vector->size());
 }
 
-size_t BooleanMat::hash_value () const {
+size_t BooleanMat::hash_value() const {
   size_t seed = 0;
   for (size_t i = 0; i < _vector->size(); i++) {
     seed = ((seed << 1) + _vector->at(i));
@@ -30,23 +30,22 @@ size_t BooleanMat::hash_value () const {
   return seed;
 }
 
-Element* BooleanMat::identity () const {
+Element* BooleanMat::identity() const {
   std::vector<bool>* matrix(new std::vector<bool>());
   matrix->resize(_vector->size(), false);
   for (size_t i = 0; i < this->degree(); i++) {
-    matrix->at(i * this->degree() + i) =  true;
+    matrix->at(i * this->degree() + i) = true;
   }
   return new BooleanMat(matrix);
 }
 
 // multiply x and y into this
-void BooleanMat::redefine (Element const* x,
-                           Element const* y) {
+void BooleanMat::redefine(Element const* x, Element const* y) {
   assert(x->degree() == y->degree());
   assert(x->degree() == this->degree());
 
-  size_t k;
-  size_t dim = this->degree();
+  size_t             k;
+  size_t             dim = this->degree();
   std::vector<bool>* xx(static_cast<BooleanMat const*>(x)->_vector);
   std::vector<bool>* yy(static_cast<BooleanMat const*>(y)->_vector);
 
@@ -57,7 +56,7 @@ void BooleanMat::redefine (Element const* x,
           break;
         }
       }
-      _vector->at(i * dim + j) =  (k < dim);
+      _vector->at(i * dim + j) = (k < dim);
     }
   }
 }
@@ -68,23 +67,23 @@ void BooleanMat::redefine (Element const* x,
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-std::vector<u_int32_t> Bipartition::_fuse = std::vector<u_int32_t>();
-std::vector<u_int32_t> Bipartition::_lookup = std::vector<u_int32_t>();
-u_int32_t Bipartition::UNDEFINED = -1;
+std::vector<u_int32_t> Bipartition::_fuse     = std::vector<u_int32_t>();
+std::vector<u_int32_t> Bipartition::_lookup   = std::vector<u_int32_t>();
+u_int32_t              Bipartition::UNDEFINED = -1;
 
-u_int32_t Bipartition::block (size_t pos) const {
+u_int32_t Bipartition::block(size_t pos) const {
   return (*_vector)[pos];
 }
 
-size_t Bipartition::complexity () const {
+size_t Bipartition::complexity() const {
   return pow(_vector->size(), 2);
 }
 
-size_t Bipartition::degree () const {
+size_t Bipartition::degree() const {
   return _vector->size() / 2;
 }
 
-size_t Bipartition::hash_value () const {
+size_t Bipartition::hash_value() const {
   size_t seed = 0;
   for (size_t i = 0; i < _vector->size(); i++) {
     seed = ((seed * _vector->size()) + _vector->at(i));
@@ -93,7 +92,7 @@ size_t Bipartition::hash_value () const {
 }
 
 // the identity of this
-Element* Bipartition::identity () const {
+Element* Bipartition::identity() const {
   std::vector<u_int32_t>* blocks(new std::vector<u_int32_t>());
   blocks->reserve(this->_vector->size());
   for (size_t j = 0; j < 2; j++) {
@@ -105,7 +104,7 @@ Element* Bipartition::identity () const {
 }
 
 // multiply x and y into this
-void Bipartition::redefine (Element const* x, Element const* y) {
+void Bipartition::redefine(Element const* x, Element const* y) {
   assert(x->degree() == y->degree());
   assert(x->degree() == this->degree());
   u_int32_t n = this->degree();
@@ -162,7 +161,7 @@ void Bipartition::redefine (Element const* x, Element const* y) {
   }
 }
 
-inline u_int32_t Bipartition::fuseit (u_int32_t pos) {
+inline u_int32_t Bipartition::fuseit(u_int32_t pos) {
   while (_fuse.at(pos) < pos) {
     pos = _fuse.at(pos);
   }
@@ -171,12 +170,12 @@ inline u_int32_t Bipartition::fuseit (u_int32_t pos) {
 
 // nr blocks
 
-u_int32_t Bipartition::const_nr_blocks () const {
+u_int32_t Bipartition::const_nr_blocks() const {
   if (_nr_blocks != Bipartition::UNDEFINED) {
     return _nr_blocks;
   }
   size_t nr = 0;
-  for (auto x: *_vector) {
+  for (auto x : *_vector) {
     if (x > nr) {
       nr = x;
     }
@@ -185,22 +184,24 @@ u_int32_t Bipartition::const_nr_blocks () const {
   return nr + 1;
 }
 
-u_int32_t Bipartition::nr_blocks () {
+u_int32_t Bipartition::nr_blocks() {
   if (_nr_blocks == Bipartition::UNDEFINED) {
     _nr_blocks = this->const_nr_blocks();
   }
   return _nr_blocks;
 }
 
-u_int32_t Bipartition::nr_left_blocks () {
+u_int32_t Bipartition::nr_left_blocks() {
   if (_nr_left_blocks == Bipartition::UNDEFINED) {
-    _nr_left_blocks = *std::max_element(_vector->begin(),
-                                        _vector->begin() + (_vector->size() / 2)) + 1;
+    _nr_left_blocks =
+        *std::max_element(_vector->begin(),
+                          _vector->begin() + (_vector->size() / 2)) +
+        1;
   }
   return _nr_left_blocks;
 }
 
-u_int32_t Bipartition::nr_right_blocks () {
+u_int32_t Bipartition::nr_right_blocks() {
   return nr_blocks() - nr_left_blocks() + rank();
 }
 
@@ -210,7 +211,7 @@ u_int32_t Bipartition::nr_right_blocks () {
 //
 // @return a const std::vector<bool>*.
 
-bool Bipartition::is_transverse_block (size_t index) {
+bool Bipartition::is_transverse_block(size_t index) {
   if (index < nr_left_blocks()) {
     init_trans_blocks_lookup();
     return _trans_blocks_lookup[index];
@@ -218,7 +219,7 @@ bool Bipartition::is_transverse_block (size_t index) {
   return false;
 }
 
-void Bipartition::init_trans_blocks_lookup () {
+void Bipartition::init_trans_blocks_lookup() {
   if (_trans_blocks_lookup.empty()) {
     _trans_blocks_lookup.resize(this->nr_left_blocks());
     for (auto it = _vector->begin() + degree(); it < _vector->end(); it++) {
@@ -229,11 +230,11 @@ void Bipartition::init_trans_blocks_lookup () {
   }
 }
 
-size_t Bipartition::rank () {
+size_t Bipartition::rank() {
   if (_rank == this->UNDEFINED) {
     init_trans_blocks_lookup();
     _rank = 0;
-    for (auto x: _trans_blocks_lookup) {
+    for (auto x : _trans_blocks_lookup) {
       if (x) {
         _rank++;
       }
@@ -242,23 +243,25 @@ size_t Bipartition::rank () {
   return _rank;
 }
 
-Blocks* Bipartition::left_blocks () {
+Blocks* Bipartition::left_blocks() {
   init_trans_blocks_lookup();
-  return new Blocks(new std::vector<u_int32_t>(_vector->begin(),
-                                               _vector->begin() + (_vector->size() / 2)),
-                                               new std::vector<bool>(_trans_blocks_lookup));
+  return new Blocks(
+      new std::vector<u_int32_t>(_vector->begin(),
+                                 _vector->begin() + (_vector->size() / 2)),
+      new std::vector<bool>(_trans_blocks_lookup));
 }
 
-Blocks* Bipartition::right_blocks () {
-  std::vector<u_int32_t>* blocks         = new std::vector<u_int32_t>();
-  std::vector<bool>*      blocks_lookup  = new std::vector<bool>();
+Blocks* Bipartition::right_blocks() {
+  std::vector<u_int32_t>* blocks        = new std::vector<u_int32_t>();
+  std::vector<bool>*      blocks_lookup = new std::vector<bool>();
 
   // must reindex the blocks
   _lookup.clear();
   _lookup.resize(this->nr_blocks(), Bipartition::UNDEFINED);
   u_int32_t nr_blocks = 0;
 
-  for (auto it = _vector->begin() + (_vector->size() / 2); it < _vector->end(); it++) {
+  for (auto it = _vector->begin() + (_vector->size() / 2); it < _vector->end();
+       it++) {
     if (_lookup[*it] == Bipartition::UNDEFINED) {
       _lookup[*it] = nr_blocks;
       blocks_lookup->push_back(this->is_transverse_block(*it));
@@ -276,24 +279,24 @@ Blocks* Bipartition::right_blocks () {
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-Semiring* MatrixOverSemiring::semiring () const {
+Semiring* MatrixOverSemiring::semiring() const {
   return _semiring;
 }
 
-void MatrixOverSemiring::set_semiring (Semiring* semiring) {
+void MatrixOverSemiring::set_semiring(Semiring* semiring) {
   assert(_semiring == nullptr);
- _semiring = semiring;
+  _semiring = semiring;
 }
 
-size_t MatrixOverSemiring::complexity () const {
+size_t MatrixOverSemiring::complexity() const {
   return pow(this->degree(), 3);
 }
 
-size_t MatrixOverSemiring::degree () const {
+size_t MatrixOverSemiring::degree() const {
   return sqrt(_vector->size());
 }
 
-size_t MatrixOverSemiring::hash_value () const {
+size_t MatrixOverSemiring::hash_value() const {
   size_t seed = 0;
   for (size_t i = 0; i < _vector->size(); i++) {
     seed = ((seed << 4) + _vector->at(i));
@@ -302,7 +305,7 @@ size_t MatrixOverSemiring::hash_value () const {
 }
 
 // the identity
-Element* MatrixOverSemiring::identity () const {
+Element* MatrixOverSemiring::identity() const {
   std::vector<long>* matrix(new std::vector<long>());
   matrix->resize(_vector->size(), _semiring->zero());
 
@@ -313,16 +316,14 @@ Element* MatrixOverSemiring::identity () const {
   return new MatrixOverSemiring(matrix, _semiring);
 }
 
-Element* MatrixOverSemiring::really_copy (size_t increase_degree_by) const {
-  MatrixOverSemiring*
-    copy(static_cast<MatrixOverSemiring*>(
-          ElementWithVectorData::really_copy(increase_degree_by)));
+Element* MatrixOverSemiring::really_copy(size_t increase_degree_by) const {
+  MatrixOverSemiring* copy(static_cast<MatrixOverSemiring*>(
+      ElementWithVectorData::really_copy(increase_degree_by)));
   copy->set_semiring(_semiring);
   return copy;
 }
 
-void MatrixOverSemiring::redefine (Element const* x,
-                                   Element const* y) {
+void MatrixOverSemiring::redefine(Element const* x, Element const* y) {
 
   MatrixOverSemiring const* xx(static_cast<MatrixOverSemiring const*>(x));
   MatrixOverSemiring const* yy(static_cast<MatrixOverSemiring const*>(y));
@@ -335,8 +336,8 @@ void MatrixOverSemiring::redefine (Element const* x,
     for (size_t j = 0; j < deg; j++) {
       long v = _semiring->zero();
       for (size_t k = 0; k < deg; k++) {
-        v = _semiring->plus(v, _semiring->prod(xx->at(i * deg + k),
-                                               yy->at(k * deg + j)));
+        v = _semiring->plus(
+            v, _semiring->prod(xx->at(i * deg + k), yy->at(k * deg + j)));
       }
       _vector->at(i * deg + j) = v;
     }
@@ -350,7 +351,7 @@ void MatrixOverSemiring::redefine (Element const* x,
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-size_t ProjectiveMaxPlusMatrix::hash_value () const {
+size_t ProjectiveMaxPlusMatrix::hash_value() const {
 
   size_t seed = 0;
   for (size_t i = 0; i < _vector->size(); i++) {
@@ -359,7 +360,7 @@ size_t ProjectiveMaxPlusMatrix::hash_value () const {
   return seed;
 }
 
-void ProjectiveMaxPlusMatrix::after () {
+void ProjectiveMaxPlusMatrix::after() {
   long   norm = *std::max_element(_vector->begin(), _vector->end());
   size_t deg  = pow(this->degree(), 2);
 
@@ -376,17 +377,17 @@ void ProjectiveMaxPlusMatrix::after () {
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-size_t PBR::complexity () const {
+size_t PBR::complexity() const {
   return pow((2 * this->degree()), 3);
 }
 
-size_t PBR::degree () const {
+size_t PBR::degree() const {
   return _vector->size() / 2;
 }
 
-size_t PBR::hash_value () const {
+size_t PBR::hash_value() const {
   size_t seed = 0;
-  size_t pow = 101;
+  size_t pow  = 101;
   for (size_t i = 0; i < this->degree(); i++) {
     for (size_t j = 0; j < this->at(i).size(); j++) {
       seed = (seed * pow) + this->at(i).at(j);
@@ -395,9 +396,9 @@ size_t PBR::hash_value () const {
   return seed;
 }
 
-Element* PBR::identity () const {
-  std::vector<std::vector<u_int32_t> >*
-    adj(new std::vector<std::vector<u_int32_t> >());
+Element* PBR::identity() const {
+  std::vector<std::vector<u_int32_t>>* adj(
+      new std::vector<std::vector<u_int32_t>>());
   size_t n = this->degree();
   adj->reserve(2 * n);
   for (u_int32_t i = 0; i < 2 * n; i++) {
@@ -410,13 +411,12 @@ Element* PBR::identity () const {
   return new PBR(adj);
 }
 
-//FIXME this allocates lots of memory on every call, maybe better to keep
-//the data in the class and overwrite it.
-//FIXME also we repeatedly search in the same part of the graph, and so
-//there is probably a lot of repeated work in the dfs. Better use some version
-//of Floyd-Warshall
-void PBR::redefine (Element const* xx,
-                    Element const* yy ) {
+// FIXME this allocates lots of memory on every call, maybe better to keep
+// the data in the class and overwrite it.
+// FIXME also we repeatedly search in the same part of the graph, and so
+// there is probably a lot of repeated work in the dfs. Better use some version
+// of Floyd-Warshall
+void PBR::redefine(Element const* xx, Element const* yy) {
   assert(xx->degree() == yy->degree());
   assert(xx->degree() == this->degree());
 
@@ -452,10 +452,9 @@ void PBR::redefine (Element const* xx,
 }
 
 // add vertex2 to the adjacency of vertex1
-void PBR::add_adjacency (size_t vertex1, size_t vertex2) {
-  auto it = std::lower_bound(_vector->at(vertex1).begin(),
-                             _vector->at(vertex1).end(),
-                             vertex2);
+void PBR::add_adjacency(size_t vertex1, size_t vertex2) {
+  auto it = std::lower_bound(
+      _vector->at(vertex1).begin(), _vector->at(vertex1).end(), vertex2);
   if (it == _vector->at(vertex1).end()) {
     _vector->at(vertex1).push_back(vertex2);
   } else if ((*it) != vertex2) {
@@ -463,17 +462,17 @@ void PBR::add_adjacency (size_t vertex1, size_t vertex2) {
   }
 }
 
-void PBR::x_dfs (u_int32_t          n,
-                 u_int32_t          i,
-                 u_int32_t          v,         // the vertex we're currently doing
-                 std::vector<bool>& x_seen,
-                 std::vector<bool>& y_seen,
-                 PBR const*         x,
-                 PBR const*         y      ) {
+void PBR::x_dfs(u_int32_t          n,
+                u_int32_t          i,
+                u_int32_t          v, // the vertex we're currently doing
+                std::vector<bool>& x_seen,
+                std::vector<bool>& y_seen,
+                PBR const*         x,
+                PBR const*         y) {
 
   if (!x_seen.at(i)) {
     x_seen.at(i) = true;
-    for (auto j: x->at(i)) {
+    for (auto j : x->at(i)) {
       if (j < n) {
         add_adjacency(v, j);
       } else {
@@ -483,17 +482,17 @@ void PBR::x_dfs (u_int32_t          n,
   }
 }
 
-void PBR::y_dfs (u_int32_t          n,
-                 u_int32_t          i,
-                 u_int32_t          v,         // the vertex we're currently doing
-                 std::vector<bool>& x_seen,
-                 std::vector<bool>& y_seen,
-                 PBR const*         x,
-                 PBR const*         y      ) {
+void PBR::y_dfs(u_int32_t          n,
+                u_int32_t          i,
+                u_int32_t          v, // the vertex we're currently doing
+                std::vector<bool>& x_seen,
+                std::vector<bool>& y_seen,
+                PBR const*         x,
+                PBR const*         y) {
 
   if (!y_seen.at(i)) {
     y_seen.at(i) = true;
-    for (auto j: y->at(i)) {
+    for (auto j : y->at(i)) {
       if (j >= n) {
         add_adjacency(v, j);
       } else {

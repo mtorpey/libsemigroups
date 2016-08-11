@@ -12,6 +12,7 @@
 #include <forward_list>
 #include <mutex>
 #include <stack>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -20,76 +21,80 @@
 
 class Congruence {
 
-  enum cong_t {
-    LEFT     = 0,
-    RIGHT    = 1,
-    TWOSIDED = 2
-  };
+  enum cong_t { LEFT = 0, RIGHT = 1, TWOSIDED = 2 };
 
- typedef size_t                    coset_t;
- typedef int64_t                   signed_coset_t;
+  typedef size_t  coset_t;
+  typedef int64_t signed_coset_t;
 
  public:
-  Congruence (std::string,
-              size_t,
-              std::vector<relation_t> const&,
-              std::vector<relation_t> const&,
-              size_t thread_id = 1);
 
-  Congruence (std::string,
-              Semigroup*,
-              std::vector<relation_t> const&,
-              bool,
-              size_t thread_id = 1);
+  Congruence(std::string                    type,
+             size_t                         nrgens,
+             std::vector<relation_t> const& relations,
+             std::vector<relation_t> const& extra,
+             size_t                         thread_id = 0);
 
-  void todd_coxeter (size_t limit = INFTY);
+  Congruence(std::string,
+             Semigroup*,
+             std::vector<relation_t> const&,
+             bool,
+             size_t thread_id = 0);
 
-  size_t nr_active_cosets () {
+  void todd_coxeter(size_t limit = INFTY);
+
+  size_t nr_active_cosets() {
     return _active;
   }
 
-  coset_t word_to_coset (word_t);
+  coset_t word_to_coset(word_t);
 
-  void terminate ();
-  bool is_tc_done ();
-  void set_report (bool);
-  void compress ();
+  void   terminate();
+  bool   is_tc_done();
+  void   set_report(bool val);
+  void   compress();
+
+  size_t nr_classes() {
+    if (!is_tc_done()) {
+      todd_coxeter();
+    }
+    return _active - 1;
+  }
 
  private:
+  Congruence(cong_t,
+             size_t,
+             std::vector<relation_t> const&,
+             std::vector<relation_t> const&,
+             size_t thread_id = 0);
 
-  Congruence (cong_t,
-              size_t,
-              std::vector<relation_t> const&,
-              std::vector<relation_t> const&,
-              size_t thread_id = 1);
+  Congruence(cong_t,
+             Semigroup*,
+             std::vector<relation_t> const&,
+             bool,
+             size_t thread_id = 0);
 
-  Congruence (cong_t,
-              Semigroup*,
-              std::vector<relation_t> const&,
-              bool,
-              size_t thread_id = 1);
-
-  void new_coset(coset_t const&, letter_t const&);
-  void identify_cosets(coset_t, coset_t);
+  void        new_coset(coset_t const&, letter_t const&);
+  void        identify_cosets(coset_t, coset_t);
   inline void trace(coset_t const&, relation_t const&, bool add = true);
-  void check_forwd();
-  cong_t type_from_string (std::string);
+  void   check_forwd();
+  cong_t type_from_string(std::string);
 
-  cong_t                       _type;
+  cong_t _type;
 
-  bool                         _tc_done;  // Has todd_coxeter already been run?
+  bool _tc_done; // Has todd_coxeter already been run?
+  bool _is_compressed;
 
-  coset_t                      _id_coset; // TODO: Remove?
-  size_t                       _nrgens;
-  std::vector<relation_t>      _relations;
-  std::vector<relation_t>      _extra;
+  coset_t                 _id_coset; // TODO: Remove?
+  size_t                  _nrgens;
+  std::vector<relation_t> _relations;
+  std::vector<relation_t> _extra;
 
-  size_t                       _active;  // Number of active cosets
+  size_t _active; // Number of active cosets
 
-  size_t                       _pack;    // Nr of active cosets allowed before a
-                                         // packing phase starts
+  size_t _pack; // Nr of active cosets allowed before a
+                // packing phase starts
 
-  std::atomic<bool>            _stop;
+  std::atomic<bool> _stop;
 
   //
   // COSET LISTS:
@@ -104,8 +109,8 @@ class Congruence {
   // with.  To indicate this alternative use of the list, the entry is negated
   // (_backwd[c] == -3 indicates that <c> was identified with coset 3).
   //
-  std::vector<coset_t>         _forwd;
-  std::vector<signed_coset_t>  _bckwd;
+  std::vector<coset_t>        _forwd;
+  std::vector<signed_coset_t> _bckwd;
   //
   // We also store some special locations in the list:
   //   _current is the coset to which we are currently applying relations.
@@ -114,10 +119,10 @@ class Congruence {
   //   _next points to the first free coset in the list.
   // Hence usually _next == _last + 1.
   //
-  coset_t                      _current;
-  coset_t                      _current_no_add;
-  coset_t                      _last;
-  coset_t                      _next;
+  coset_t _current;
+  coset_t _current_no_add;
+  coset_t _last;
+  coset_t _next;
 
   //
   // COSET TABLES:
@@ -137,37 +142,37 @@ class Congruence {
   //   - Then change _preim_init[c][i] to point to v.
   // Now the new preimage and all the old preimages are stored.
   //
-  RecVec<coset_t>              _table;
-  RecVec<coset_t>              _preim_init;
-  RecVec<coset_t>              _preim_next;
+  RecVec<coset_t> _table;
+  RecVec<coset_t> _preim_init;
+  RecVec<coset_t> _preim_next;
 
   // Stacks for identifying cosets
-  std::stack<coset_t>          _lhs_stack;
-  std::stack<coset_t>          _rhs_stack;
+  std::stack<coset_t> _lhs_stack;
+  std::stack<coset_t> _rhs_stack;
 
   // Statistics etc.
-  bool                         _report;
-  size_t                       _defined;
-  size_t                       _killed;
-  size_t                       _stop_packing;  //TODO: make this a bool?
-  size_t                       _next_report;
+  bool   _report;
+  size_t _defined;
+  size_t _killed;
+  size_t _stop_packing; // TODO: make this a bool?
+  size_t _next_report;
 
   // Determines whether we pre-populate the table with known info
-  bool                         _use_known;
+  bool _use_known;
 
-  size_t                       _thread_id;
+  size_t _thread_id;
 
-  static size_t                INFTY;
-  static size_t                UNDEFINED;
-  static std::mutex            _report_mtx;
+  static size_t     INFTY;
+  static size_t     UNDEFINED;
+  static std::mutex _report_mtx;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-Congruence* finite_cong_enumerate (std::string,
-                                   Semigroup*,
-                                   std::vector<relation_t> const&,
-                                   bool report = false);
+Congruence* cong_pairs_enumerate(std::string,
+                                 Semigroup*,
+                                 std::vector<relation_t> const&,
+                                 bool report = false);
 
 #endif // TC_H_

@@ -9,120 +9,113 @@
 
 #include <thread>
 
-size_t Congruence::INFTY = -1;
-size_t Congruence::UNDEFINED = -1;
+size_t     Congruence::INFTY     = -1;
+size_t     Congruence::UNDEFINED = -1;
 std::mutex Congruence::_report_mtx;
 
-#define REPORT(str) \
-  _report_mtx.lock(); \
-  std::cout << "Thread #" << _thread_id << ": " << __func__ << ": " \
-    << str << std::endl; \
+#define REPORT(str)                                                            \
+  _report_mtx.lock();                                                          \
+  std::cout << "Thread #" << _thread_id << ": " << __func__ << ": " << str     \
+            << std::endl;                                                      \
   _report_mtx.unlock();
 
-Congruence::cong_t Congruence::type_from_string (std::string type_str) {
+Congruence::cong_t Congruence::type_from_string(std::string type_str) {
   if (type_str == "left") {
-      return cong_t::LEFT;
+    return cong_t::LEFT;
   } else if (type_str == "right") {
-      return cong_t::RIGHT;
+    return cong_t::RIGHT;
   } else if (type_str == "twosided") {
-      return cong_t::TWOSIDED;
+    return cong_t::TWOSIDED;
   } else {
     assert(false);
   }
 }
 
-Congruence::Congruence (std::string                    type_str,
-                        size_t                         nrgens,
-                        std::vector<relation_t> const& relations,
-                        std::vector<relation_t> const& extra,
-                        size_t                         thread_id) :
-  Congruence(type_from_string(type_str),
-             nrgens,
-             relations,
-             extra,
-             thread_id) { }
+Congruence::Congruence(std::string                    type_str,
+                       size_t                         nrgens,
+                       std::vector<relation_t> const& relations,
+                       std::vector<relation_t> const& extra,
+                       size_t                         thread_id)
+    : Congruence(
+          type_from_string(type_str), nrgens, relations, extra, thread_id) {}
 
-Congruence::Congruence (cong_t                         type,
-                        size_t                         nrgens,
-                        // TODO default these to empty vectors
-                        std::vector<relation_t> const& relations,
-                        std::vector<relation_t> const& extra,
-                        size_t                         thread_id) :
-  _type(type),
-  _tc_done(false),
-  _id_coset(0),
-  _nrgens(nrgens),
-  _relations(relations),
-  _active(1),
-  _pack(120000),
-  _stop(false),
-  _forwd(1, UNDEFINED),
-  _bckwd(1, 0),
-  _current(0),
-  _current_no_add(UNDEFINED),
-  _last(0),
-  _next(UNDEFINED),
-  _table(_nrgens, 1, UNDEFINED),
-  _preim_init(_nrgens, 1, UNDEFINED),
-  _preim_next(_nrgens, 1, UNDEFINED),
-  _report(true),
-  _defined(1),
-  _killed(0),
-  _stop_packing(false),
-  _next_report(0),
-  _use_known(false),
-  _thread_id(thread_id) {
+Congruence::Congruence(cong_t type,
+                       size_t nrgens,
+                       // TODO default these to empty vectors
+                       std::vector<relation_t> const& relations,
+                       std::vector<relation_t> const& extra,
+                       size_t                         thread_id)
+    : _type(type),
+      _tc_done(false),
+      _is_compressed(false),
+      _id_coset(0),
+      _nrgens(nrgens),
+      _relations(relations),
+      _active(1),
+      _pack(120000),
+      _stop(false),
+      _forwd(1, UNDEFINED),
+      _bckwd(1, 0),
+      _current(0),
+      _current_no_add(UNDEFINED),
+      _last(0),
+      _next(UNDEFINED),
+      _table(_nrgens, 1, UNDEFINED),
+      _preim_init(_nrgens, 1, UNDEFINED),
+      _preim_next(_nrgens, 1, UNDEFINED),
+      _report(true),
+      _defined(1),
+      _killed(0),
+      _stop_packing(false),
+      _next_report(0),
+      _use_known(false),
+      _thread_id(thread_id) {
 
   // TODO: check that the entries in extra/relations are properly defined
   // i.e. that every entry is at most nrgens - 1
 
-    switch (_type) {
-      case LEFT:
-        for (relation_t& rel: _relations) {
-          std::reverse(rel.first.begin(), rel.first.end());
-          std::reverse(rel.second.begin(), rel.second.end());
-        }
-        _extra = extra;
-        for (relation_t& rel: _extra) {
-          std::reverse(rel.first.begin(), rel.first.end());
-          std::reverse(rel.second.begin(), rel.second.end());
-        }
-        break;
-      case RIGHT: // do nothing
-        _extra = extra;
-        break;
-      case TWOSIDED:
-        _relations.insert(_relations.end(),
-                          extra.begin(),
-                          extra.end());
-        _extra = std::vector<relation_t>();
-        break;
-      default:
-        assert(false);
-    }
+  switch (_type) {
+    case LEFT:
+      for (relation_t& rel : _relations) {
+        std::reverse(rel.first.begin(), rel.first.end());
+        std::reverse(rel.second.begin(), rel.second.end());
+      }
+      _extra = extra;
+      for (relation_t& rel : _extra) {
+        std::reverse(rel.first.begin(), rel.first.end());
+        std::reverse(rel.second.begin(), rel.second.end());
+      }
+      break;
+    case RIGHT: // do nothing
+      _extra = extra;
+      break;
+    case TWOSIDED:
+      _relations.insert(_relations.end(), extra.begin(), extra.end());
+      _extra = std::vector<relation_t>();
+      break;
+    default:
+      assert(false);
+  }
 }
 
-Congruence::Congruence (std::string                    type_str,
-                        Semigroup*                     semigroup,
-                        std::vector<relation_t> const& extra,
-                        bool                           use_known,
-                        size_t                         thread_id) :
-  Congruence(type_from_string(type_str),
-             semigroup,
-             extra,
-             use_known,
-             thread_id) { }
+Congruence::Congruence(std::string                    type_str,
+                       Semigroup*                     semigroup,
+                       std::vector<relation_t> const& extra,
+                       bool                           use_known,
+                       size_t                         thread_id)
+    : Congruence(
+          type_from_string(type_str), semigroup, extra, use_known, thread_id) {}
 
-Congruence::Congruence (cong_t                         type,
-                        Semigroup*                     semigroup,
-                        std::vector<relation_t> const& extra,
-                        bool                           use_known,
-                        size_t                         thread_id) :
-  Congruence(type,
-             semigroup->nrgens(),
-             std::vector<relation_t>(),
-             extra,
-             thread_id) {
+Congruence::Congruence(cong_t                         type,
+                       Semigroup*                     semigroup,
+                       std::vector<relation_t> const& extra,
+                       bool                           use_known,
+                       size_t                         thread_id)
+    : Congruence(type,
+                 semigroup->nrgens(),
+                 std::vector<relation_t>(),
+                 extra,
+                 thread_id) {
 
   if (use_known) { // use the right or left Cayley table of semigroup
     _use_known = true;
@@ -151,7 +144,7 @@ Congruence::Congruence (cong_t                         type,
       _forwd.push_back(i + 1);
       _bckwd.push_back(i - 1);
     }
-    _forwd[0] = 1;
+    _forwd[0]           = 1;
     _forwd[_active - 1] = UNDEFINED;
 
     _last = _active - 1;
@@ -180,7 +173,7 @@ Congruence::Congruence (cong_t                         type,
       assert(false); // FIXME
     }
     if (_type == LEFT) {
-      while (! relation.empty()) {
+      while (!relation.empty()) { // TODO improve this
         word_t lhs = *(semigroup->factorisation(relation[0]));
         lhs.push_back(relation[1]);
         std::reverse(lhs.begin(), lhs.end());
@@ -190,7 +183,7 @@ Congruence::Congruence (cong_t                         type,
         semigroup->next_relation(relation, _report);
       }
     } else {
-      while (! relation.empty()) {
+      while (!relation.empty()) {
         word_t lhs = *(semigroup->factorisation(relation[0]));
         lhs.push_back(relation[1]);
         word_t rhs = *(semigroup->factorisation(relation[2]));
@@ -205,7 +198,7 @@ Congruence::Congruence (cong_t                         type,
 // new_coset( c, a )
 // Create a new active coset for coset c to map to under generator a
 //
-void Congruence::new_coset (coset_t const& c, letter_t const& a) {
+void Congruence::new_coset(coset_t const& c, letter_t const& a) {
 
   if (_stop) {
     return;
@@ -216,7 +209,7 @@ void Congruence::new_coset (coset_t const& c, letter_t const& a) {
 
   if (_next == UNDEFINED) {
     // There are no free cosets to recycle: make a new one
-    _next = _active - 1;
+    _next         = _active - 1;
     _forwd[_last] = _next;
     _forwd.push_back(UNDEFINED);
     _bckwd.push_back(_last);
@@ -251,7 +244,7 @@ void Congruence::new_coset (coset_t const& c, letter_t const& a) {
 // identify_cosets( lhs, rhs )
 // Identify lhs with rhs, and process any further coincidences
 //
-void Congruence::identify_cosets (coset_t lhs, coset_t rhs) {
+void Congruence::identify_cosets(coset_t lhs, coset_t rhs) {
   if (_stop) {
     return;
   }
@@ -263,8 +256,8 @@ void Congruence::identify_cosets (coset_t lhs, coset_t rhs) {
     return;
   } else if (rhs < lhs) {
     coset_t tmp = lhs;
-    lhs = rhs;
-    rhs = tmp;
+    lhs         = rhs;
+    rhs         = tmp;
     // TODO: Should this be done after the (lhs = -_bckwd[lhs];) step?
   }
 
@@ -300,7 +293,7 @@ void Congruence::identify_cosets (coset_t lhs, coset_t rhs) {
         _bckwd[_forwd[rhs]] = _bckwd[rhs];
         _forwd[_bckwd[rhs]] = _forwd[rhs];
         // Add <rhs> to the start of the free list
-        _forwd[rhs] = _next;
+        _forwd[rhs]   = _next;
         _forwd[_last] = rhs;
       }
       _next = rhs;
@@ -312,7 +305,7 @@ void Congruence::identify_cosets (coset_t lhs, coset_t rhs) {
         // Let <v> be the first PREIMAGE of <rhs>
         coset_t v = _preim_init.get(rhs, i);
         while (v != UNDEFINED) {
-          _table.set(v, i, lhs);  // Replace <rhs> by <lhs> in the table
+          _table.set(v, i, lhs); // Replace <rhs> by <lhs> in the table
           coset_t u = _preim_next.get(v, i); // Get <rhs>'s next preimage
           _preim_next.set(v, i, _preim_init.get(lhs, i));
           _preim_init.set(lhs, i, v); // v is now a preimage of <lhs>, not <rhs>
@@ -355,8 +348,10 @@ void Congruence::identify_cosets (coset_t lhs, coset_t rhs) {
       break;
     }
     // Get the next pair to be identified
-    lhs = _lhs_stack.top(); _lhs_stack.pop();
-    rhs = _rhs_stack.top(); _rhs_stack.pop();
+    lhs = _lhs_stack.top();
+    _lhs_stack.pop();
+    rhs = _rhs_stack.top();
+    _rhs_stack.pop();
   }
 }
 
@@ -367,7 +362,7 @@ void Congruence::identify_cosets (coset_t lhs, coset_t rhs) {
 // will be created whenever necessary; if false, then we are "packing", and this
 // function will not create any new cosets.
 //
-void Congruence::trace (coset_t const& c, relation_t const& rel, bool add) {
+void Congruence::trace(coset_t const& c, relation_t const& rel, bool add) {
 
   if (_stop) {
     return;
@@ -406,18 +401,19 @@ void Congruence::trace (coset_t const& c, relation_t const& rel, bool add) {
   _next_report++;
   if (_next_report > 4000000) {
     if (_report) {
-      REPORT(_defined << " defined, " <<
-             _forwd.size() << " max, " <<
-             _active << " active, " <<
-             (_defined - _active) - _killed << " killed, " <<
-             "current " << (add ? _current : _current_no_add));
+      REPORT(_defined << " defined, " << _forwd.size() << " max, " << _active
+                      << " active, "
+                      << (_defined - _active) - _killed
+                      << " killed, "
+                      << "current "
+                      << (add ? _current : _current_no_add));
     }
     // If we are killing cosets too slowly, then stop packing
     if ((_defined - _active) - _killed < 100) {
       _stop_packing = true;
     }
     _next_report = 0;
-    _killed = _defined - _active;
+    _killed      = _defined - _active;
   }
 
   if (_stop) {
@@ -444,7 +440,7 @@ void Congruence::trace (coset_t const& c, relation_t const& rel, bool add) {
         _preim_next.set(rhs, b, UNDEFINED);
       }
     } else {
-      return;  // Packing phase: do nothing
+      return; // Packing phase: do nothing
     }
   } else if (u == UNDEFINED && v != UNDEFINED) {
     // Set lhs^a to v
@@ -467,18 +463,18 @@ void Congruence::trace (coset_t const& c, relation_t const& rel, bool add) {
 // Apply the TC algorithm until the coset table is complete.
 // TODO: <limit> should be the max table size; it is currently ignored.
 //
-void Congruence::todd_coxeter (size_t limit) {
+void Congruence::todd_coxeter(size_t limit) {
 
   // TODO this should be put into a method that is only called once
 
   // If we have already run this before, then we are done
-  if (_tc_done) {
+  if (_tc_done || _is_compressed) {
     return;
   }
 
   // Apply each "extra" relation to the first coset only
-  for (relation_t const& rel: _extra) {
-    trace(_id_coset, rel);  // Allow new cosets
+  for (relation_t const& rel : _extra) {
+    trace(_id_coset, rel); // Allow new cosets
     if (_stop) {
       return;
     }
@@ -489,30 +485,31 @@ void Congruence::todd_coxeter (size_t limit) {
   }
   do {
     // Apply each relation to the "_current" coset
-    for (relation_t const& rel: _relations) {
-      trace(_current, rel);  // Allow new cosets
+    for (relation_t const& rel : _relations) {
+      trace(_current, rel); // Allow new cosets
     }
 
     // If the number of active cosets is too high, start a packing phase
     if (_active > _pack) {
       if (_report) {
-        REPORT(_defined << " defined, " <<
-               _forwd.size() << " max, " <<
-               _active << " active, " <<
-               (_defined - _active) - _killed << " killed, " <<
-               "current " << _current);
+        REPORT(_defined << " defined, " << _forwd.size() << " max, " << _active
+                        << " active, "
+                        << (_defined - _active) - _killed
+                        << " killed, "
+                        << "current "
+                        << _current);
         REPORT("Entering lookahead phase . . .");
         _killed = _defined - _active;
       }
 
       size_t oldactive = _active;  // Keep this for stats
-      _current_no_add = _current;  // Start packing from _current
+      _current_no_add  = _current; // Start packing from _current
       // TODO: Should this be "_current + 1"?
 
       do {
         // Apply every relation to the "_current_no_add" coset
-        for (relation_t const& rel: _relations) {
-          trace(_current_no_add, rel, false);  // Don't allow new cosets
+        for (relation_t const& rel : _relations) {
+          trace(_current_no_add, rel, false); // Don't allow new cosets
         }
         _current_no_add = _forwd[_current_no_add];
 
@@ -522,11 +519,10 @@ void Congruence::todd_coxeter (size_t limit) {
         }
       } while (_current_no_add != _next && !_stop_packing);
       if (_report) {
-        REPORT("Lookahead phase complete " <<
-               oldactive - _active << " killed");
+        REPORT("Lookahead phase complete " << oldactive - _active << " killed");
       }
-      _pack += _pack / 10;  // Raise packing threshold 10%
-      _stop_packing = false;
+      _pack += _pack / 10; // Raise packing threshold 10%
+      _stop_packing   = false;
       _current_no_add = UNDEFINED;
     }
 
@@ -541,9 +537,11 @@ void Congruence::todd_coxeter (size_t limit) {
 
   // Final report
   if (_report) {
-    REPORT(_defined << " cosets defined," <<
-           " maximum " << _forwd.size() <<
-           _active << " survived");
+    REPORT(_defined << " cosets defined,"
+                    << " maximum "
+                    << _forwd.size()
+                    << _active
+                    << " survived");
   }
 
   _tc_done = true;
@@ -551,70 +549,52 @@ void Congruence::todd_coxeter (size_t limit) {
   // No return value: all info is now stored in the class
 }
 
-/*void Congruence::todd_coxeter_finite () {
-  if (_use_known) {
-    switch (_type) {
-      case LEFT: // TODO
-        break;
-      case RIGHT:
-        for (relation_t const& rel: _extra) {
-          trace(_id_coset, rel);
-          if (_stop) {
-            return;
-          }
-        }
-        _tc_done = true;
-        break;
-      case TWOSIDED:
-        break;
-      default:
-        assert(false);
-    }
-  } else {
+// Return the coset which corresponds to the word <w>.
+
+size_t Congruence::word_to_coset(word_t w) {
+  if (!_tc_done) {
     todd_coxeter();
   }
-}*/
-
-//
-// word_to_coset( w )
-// We assume that todd_coxeter has already been run.
-// Return the coset which corresponds to the word <w>.
-//
-size_t Congruence::word_to_coset (word_t w) {
   coset_t c = _id_coset;
   if (_type == LEFT) {
     // Iterate in reverse order
-    for (auto rit = w.rbegin(); rit >= w.rend(); rit++) {
+    for (auto rit = w.crbegin(); rit != w.crend(); ++rit) {
       c = _table.get(c, *rit);
-      assert(c != UNDEFINED);
+      //assert(c != UNDEFINED);
     }
   } else {
     // Iterate in sequential order
-    for (auto it = w.begin(); it < w.end(); it++) {
+    for (auto it = w.cbegin(); it != w.cend(); ++it) {
       c = _table.get(c, *it);
-      assert(c != UNDEFINED);
+      //assert(c != UNDEFINED);
     }
   }
   return c;
 }
 
-void Congruence::terminate () {
+void Congruence::terminate() {
   _stop = true;
 }
 
-void Congruence::set_report (bool val) {
+void Congruence::set_report(bool val) {
   _report = val;
 }
 
-bool Congruence::is_tc_done () {
+bool Congruence::is_tc_done() {
   return _tc_done;
 }
 
 // compress the table
 
-void Congruence::compress () {
-  if (! is_tc_done()) {
+void Congruence::compress() {
+  if (_is_compressed) {
+    return;
+  } else if (!is_tc_done()) {
     todd_coxeter();
+  }
+  _is_compressed = true;
+  if (_active == _table.nr_rows()) {
+    return;
   }
 
   RecVec<coset_t> table(_nrgens, _active);
@@ -625,13 +605,22 @@ void Congruence::compress () {
   lookup.insert(std::make_pair(_id_coset, 0));
 
   size_t next_index = 1;
-  size_t curr_index = 0;
 
   while (pos != _next) {
+    size_t curr_index;
+    auto   it = lookup.find(pos);
+    if (it == lookup.end()) {
+      lookup.insert(std::make_pair(pos, next_index));
+      curr_index = next_index;
+      next_index++;
+    } else {
+      curr_index = it->second;
+    }
+
     // copy row
     for (size_t i = 0; i < _nrgens; i++) {
       coset_t val = _table.get(pos, i);
-      auto it = lookup.find(val);
+      auto    it  = lookup.find(val);
       if (it == lookup.end()) {
         lookup.insert(std::make_pair(val, next_index));
         val = next_index;
@@ -641,34 +630,23 @@ void Congruence::compress () {
       }
       table.set(curr_index, i, val);
     }
-    curr_index++;
     pos = _forwd[pos];
   }
 
   _table = table;
-
 }
 
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-Congruence* finite_cong_enumerate (std::string type,
-                                   Semigroup* S,
-                                   std::vector<relation_t> const& extra,
-                                   bool report) {
+Congruence* compete(Congruence* cong_t, Congruence* cong_f, bool report) {
 
   Timer timer;
   if (report) {
     timer.start();
   }
 
-  Congruence* cong_t(new Congruence(type, S, extra, true, 1));
-  Congruence* cong_f(new Congruence(type, S, extra, false, 2));
-
   cong_t->set_report(report);
   cong_f->set_report(report);
 
-  auto go = [] (Congruence& this_cong, Congruence& that_cong) {
+  auto go = [](Congruence& this_cong, Congruence& that_cong) {
     this_cong.todd_coxeter();
     that_cong.terminate();
   };
@@ -685,18 +663,39 @@ Congruence* finite_cong_enumerate (std::string type,
 
   if (cong_t->is_tc_done()) {
     if (report) {
-      std::cout << __func__ << ": Using the Cayley graph (Thread #1) won!" <<
-        std::endl;
+      std::cout << __func__ << ": Using the Cayley graph (Thread #1) won!"
+                << std::endl;
     }
     delete cong_f;
     return cong_t;
   } else {
     assert(cong_f->is_tc_done());
     if (report) {
-      std::cout << __func__ << ": Using the Cayley graph (Thread #1) lost!" <<
-        std::endl;
+      std::cout << __func__ << ": Not using the Cayley graph (Thread #2) won!"
+                << std::endl;
     }
     delete cong_t;
     return cong_f;
   }
 }
+
+Congruence* cong_pairs_enumerate(std::string                    type,
+                                 Semigroup*                     S,
+                                 std::vector<relation_t> const& extra,
+                                 bool                           report) {
+
+  return compete(new Congruence(type, S, extra, true, 1),
+                 new Congruence(type, S, extra, false, 2),
+                 report);
+}
+
+/*Congruence* cong_pairs_enumerate(std::string                    type,
+                                 size_t                         nrgens,
+                                 std::vector<relation_t> const& rels,
+                                 std::vector<relation_t> const& extra,
+                                 bool                           report) {
+
+  return compete(new Congruence(type, nrgens, rels, extra, 1),
+                 new Congruence(type, nrgens, rels, extra, 2),
+                 report);
+}*/
