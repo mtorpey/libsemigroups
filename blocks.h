@@ -158,14 +158,6 @@ class Blocks {
     return _blocks->end();
   }
 
-  inline typename std::vector<bool>::iterator lookup_begin() const {
-    return _lookup->begin();
-  }
-
-  inline typename std::vector<bool>::iterator lookup_end() const {
-    return _lookup->end();
-  }
-
  private:
   std::vector<u_int32_t>* _blocks;
   std::vector<bool>*      _lookup;
