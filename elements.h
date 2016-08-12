@@ -291,8 +291,9 @@ class PartialPerm : public PartialTransformation<T, PartialPerm<T>> {
 
     for (size_t i = 0; i < deg_this; i++) {
       if ((*pp_this)[i] != (*pp_that)[i]) {
-        return (*pp_this)[i] == _UNDEFINED ||
-               ((*pp_that)[i] != _UNDEFINED && (*pp_this)[i] < (*pp_that)[i]);
+        return (*pp_this)[i] == _UNDEFINED
+               || ((*pp_that)[i] != _UNDEFINED
+                   && (*pp_this)[i] < (*pp_that)[i]);
       }
     }
     return false;

@@ -54,7 +54,6 @@ class Semigroup {
     Semigroup const& _semigroup;
   };
 
-
  public:
   Semigroup& operator=(Semigroup const&) = delete;
 
@@ -99,8 +98,7 @@ class Semigroup {
         _pos_sorted(nullptr),
         _suffix(),
         _wordlen(0), // (length of the current word) - 1
-        _reporter(*this)
-  {
+        _reporter(*this) {
     assert(_nrgens != 0);
 
     for (Element* x : *gens) {
@@ -465,13 +463,13 @@ class Semigroup {
   size_t product_by_reduction(size_t i, size_t j) const {
     assert(i < _nr && j < _nr);
     if (length(i) <= length(j)) {
-      while (i != (size_t)-1) {
+      while (i != (size_t) -1) {
         j = _left->get(j, _final.at(i));
         i = _prefix.at(i);
       }
       return j;
     } else {
-      while (j != (size_t)-1) {
+      while (j != (size_t) -1) {
         i = _right->get(i, _first.at(j));
         j = _suffix.at(j);
       }
@@ -487,8 +485,8 @@ class Semigroup {
 
   size_t fast_product(size_t i, size_t j) const {
     assert(i < _nr && j < _nr);
-    if (length(i) < 2 * _tmp_product->complexity() ||
-        length(j) < 2 * _tmp_product->complexity()) {
+    if (length(i) < 2 * _tmp_product->complexity()
+        || length(j) < 2 * _tmp_product->complexity()) {
       return product_by_reduction(i, j);
     } else {
       _tmp_product->redefine(_elements->at(i), _elements->at(j));
@@ -522,8 +520,8 @@ class Semigroup {
     result.resize(max_rank, 0);
     int pos = _elements->size() - 1;
     int len = _lenindex.size() - 3; // not sure if this is right
-    while (len >= 0 &&
-           std::find(result.begin(), result.end(), 0) != result.end()) {
+    while (len >= 0
+           && std::find(result.begin(), result.end(), 0) != result.end()) {
       while (pos >= static_cast<int>(_lenindex[len])) {
         size_t r = (*_elements)[pos]->crank() - 1;
         if (result[r] == 0) {
@@ -604,7 +602,7 @@ class Semigroup {
   *******************************************************************************/
 
   size_t test_membership(Element* x, bool report) {
-    return (position(x, report) != (size_t)-1);
+    return (position(x, report) != (size_t) -1);
   }
 
   /*******************************************************************************
@@ -734,7 +732,7 @@ class Semigroup {
     }
 
     if (pos < _nr) {
-      while (pos != (size_t)-1) {
+      while (pos != (size_t) -1) {
         word.push_back(_first.at(pos));
         pos = _suffix.at(pos);
       }
@@ -772,13 +770,13 @@ class Semigroup {
       return;
     }
 
-    if (_relation_pos != (size_t)-1) {
+    if (_relation_pos != (size_t) -1) {
       while (_relation_pos < _nr) {
         while (_relation_gen < _nrgens) {
-          if (!_reduced.get(_index.at(_relation_pos), _relation_gen) &&
-              (_relation_pos < _lenindex.at(1) ||
-               _reduced.get(_suffix.at(_index.at(_relation_pos)),
-                            _relation_gen))) {
+          if (!_reduced.get(_index.at(_relation_pos), _relation_gen)
+              && (_relation_pos < _lenindex.at(1)
+                  || _reduced.get(_suffix.at(_index.at(_relation_pos)),
+                                  _relation_gen))) {
             relation.push_back(_index.at(_relation_pos));
             relation.push_back(_relation_gen);
             relation.push_back(
@@ -884,7 +882,7 @@ class Semigroup {
             size_t r = _right->get(s, j);
             if (_found_one && r == _pos_one) {
               _right->set(i, j, _genslookup.at(b));
-            } else if (_prefix.at(r) != (size_t)-1) { // r is not a generator
+            } else if (_prefix.at(r) != (size_t) -1) { // r is not a generator
               _right->set(
                   i,
                   j,
@@ -1066,7 +1064,7 @@ class Semigroup {
               }
               _index.push_back(k);
               old_new.at(k) = true;
-            } else if (s == (size_t)-1 || _reduced.get(s, j)) {
+            } else if (s == (size_t) -1 || _reduced.get(s, j)) {
               // this clause could be removed if _nrrules wasn't necessary
               _nrrules++;
             }
@@ -1162,7 +1160,7 @@ class Semigroup {
       size_t r = _right->get(s, j);
       if (_found_one && r == _pos_one) {
         _right->set(i, j, _genslookup.at(b));
-      } else if (_prefix.at(r) != (size_t)-1) {
+      } else if (_prefix.at(r) != (size_t) -1) {
         _right->set(
             i, j, _right->get(_left->get(_prefix.at(r), b), _final.at(r)));
       } else {
@@ -1252,7 +1250,7 @@ class Semigroup {
   Element*             _tmp_product;
   size_t               _wordlen;
 
-  Reporter             _reporter;
+  Reporter _reporter;
 };
 
 #endif // SEMIGROUPS_H_

@@ -68,10 +68,10 @@ class Congruence {
 
   coset_t word_to_coset(word_t);
 
-  void   terminate();
-  bool   is_tc_done();
-  void   set_report(bool val);
-  void   compress();
+  void terminate();
+  bool is_tc_done();
+  void set_report(bool val);
+  void compress();
 
   size_t nr_classes() {
     if (!is_tc_done()) {
@@ -188,9 +188,9 @@ class Congruence {
 
   size_t _thread_id;
 
-  static size_t     INFTY;
-  static size_t     UNDEFINED;
-  static Reporter   _reporter;
+  static size_t   INFTY;
+  static size_t   UNDEFINED;
+  static Reporter _reporter;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -198,7 +198,7 @@ class Congruence {
 
 Congruence* parallel_todd_coxeter(Congruence* cong_t,
                                   Congruence* cong_f,
-                                  bool report = false);
+                                  bool        report = false);
 
 Congruence* cong_pairs_enumerate(std::string,
                                  Semigroup*,

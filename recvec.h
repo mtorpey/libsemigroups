@@ -216,7 +216,8 @@ template <typename T> class RecVec {
     add_rows(copy._nr_rows);
 
     if (copy._nr_unused_cols == _nr_unused_cols) {
-      std::copy(copy._vec.begin(), copy._vec.end(),
+      std::copy(copy._vec.begin(),
+                copy._vec.end(),
                 _vec.begin() + (_nr_used_cols + _nr_unused_cols) * old_nr_rows);
     } else { // TODO improve this
       for (size_t i = old_nr_rows; i < _nr_rows; i++) {
