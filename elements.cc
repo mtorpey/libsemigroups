@@ -1,12 +1,25 @@
-/*******************************************************************************
- * Semigroups++
- *
- * This file contains classes for creating elements of a semigroup.
- *
- *******************************************************************************/
+//
+// Semigroups++ - C/C++ library for computing with semigroups and monoids
+// Copyright (C) 2016 James D. Mitchell
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 
-#include "elements.h"
-#include "blocks.h"
+// This file contains implementations of the non-template derived classes of
+// the Elements abstract base class.
+
+#include "semigroups++/elements.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -195,8 +208,8 @@ u_int32_t Bipartition::nr_left_blocks() {
   if (_nr_left_blocks == Bipartition::UNDEFINED) {
     _nr_left_blocks =
         *std::max_element(_vector->begin(),
-                          _vector->begin() + (_vector->size() / 2)) +
-        1;
+                          _vector->begin() + (_vector->size() / 2))
+        + 1;
   }
   return _nr_left_blocks;
 }

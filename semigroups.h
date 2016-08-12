@@ -1,9 +1,20 @@
-/*
- * Semigroups++
- *
- * This file contains the Froidure-Pin algorithm for arbitrary semigroups.
- *
- */
+//
+// Semigroups++ - C/C++ library for computing with semigroups and monoids
+// Copyright (C) 2016 James D. Mitchell
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 
 // TODO
 // 0) move the methods to the cc file
@@ -19,9 +30,9 @@
 #include <unordered_map>
 #include <vector>
 
-#include "elements.h"
-#include "recvec.h"
-#include "report.h"
+#include "semigroups++/elements.h"
+#include "semigroups++/recvec.h"
+#include "semigroups++/report.h"
 
 typedef size_t                letter_t;
 typedef std::vector<letter_t> word_t;
