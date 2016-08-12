@@ -16,9 +16,9 @@
 #include <utility>
 #include <vector>
 
-#include "elements.h"
-#include "report.h"
-#include "semigroups.h"
+#include "semigroups++/elements.h"
+#include "semigroups++/report.h"
+#include "semigroups++/semigroups.h"
 
 class Congruence {
 
@@ -28,18 +28,24 @@ class Congruence {
   typedef int64_t signed_coset_t;
 
  public:
-
   Congruence(std::string                    type,
              size_t                         nrgens,
              std::vector<relation_t> const& relations,
              std::vector<relation_t> const& extra,
              size_t                         thread_id = 0);
 
-  Congruence(std::string,
-             Semigroup*,
-             std::vector<relation_t> const&,
-             bool,
-             size_t thread_id = 0);
+  Congruence(std::string                    type,
+             Semigroup*                     semigroup,
+             std::vector<relation_t> const& extra,
+             bool                           prefill,
+             size_t                         thread_id = 0);
+
+  Congruence(std::string                    type,
+             size_t                         nrgens,
+             std::vector<relation_t> const& relations,
+             std::vector<relation_t> const& extra,
+             RecVec<coset_t>&               prefill,
+             size_t                         thread_id = 0);
 
   ~Congruence() {}
 
@@ -64,17 +70,26 @@ class Congruence {
   }
 
  private:
-  Congruence(cong_t,
-             size_t,
-             std::vector<relation_t> const&,
-             std::vector<relation_t> const&,
-             size_t thread_id = 0);
+  Congruence(cong_t                         type,
+             size_t                         nrgens,
+             std::vector<relation_t> const& relations,
+             std::vector<relation_t> const& extra,
+             size_t                         thread_id = 0);
 
-  Congruence(cong_t,
-             Semigroup*,
-             std::vector<relation_t> const&,
-             bool,
-             size_t thread_id = 0);
+  Congruence(cong_t                         type,
+             Semigroup*                     semigroup,
+             std::vector<relation_t> const& extra,
+             bool                           prefill,
+             size_t                         thread_id = 0);
+
+  Congruence(cong_t                         type,
+             size_t                         nrgens,
+             std::vector<relation_t> const& relations,
+             std::vector<relation_t> const& extra,
+             RecVec<coset_t>&               prefill,
+             size_t                         thread_id = 0);
+
+  void init_after_prefill();
 
   void        new_coset(coset_t const&, letter_t const&);
   void        identify_cosets(coset_t, coset_t);
@@ -160,11 +175,7 @@ class Congruence {
   size_t _stop_packing; // TODO: make this a bool?
   size_t _next_report;
 
-  // Determines whether we pre-populate the table with known info
-  bool _use_known;
-
   size_t _thread_id;
-
 
   static size_t     INFTY;
   static size_t     UNDEFINED;

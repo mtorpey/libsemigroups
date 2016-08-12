@@ -13,25 +13,28 @@ size_t   Congruence::INFTY     = -1;
 size_t   Congruence::UNDEFINED = -1;
 Reporter Congruence::_reporter;
 
-Congruence::cong_t Congruence::type_from_string(std::string type_str) {
-  if (type_str == "left") {
+Congruence::cong_t Congruence::type_from_string(std::string type) {
+  if (type == "left") {
     return cong_t::LEFT;
-  } else if (type_str == "right") {
+  } else if (type == "right") {
     return cong_t::RIGHT;
-  } else if (type_str == "twosided") {
+  } else if (type == "twosided") {
     return cong_t::TWOSIDED;
   } else {
     assert(false);
   }
 }
 
-Congruence::Congruence(std::string                    type_str,
+Congruence::Congruence(std::string                    type,
                        size_t                         nrgens,
                        std::vector<relation_t> const& relations,
                        std::vector<relation_t> const& extra,
                        size_t                         thread_id)
-    : Congruence(
-          type_from_string(type_str), nrgens, relations, extra, thread_id) {}
+    : Congruence(type_from_string(type),
+                 nrgens,
+                 relations,
+                 extra,
+                 thread_id) {}
 
 Congruence::Congruence(cong_t type,
                        size_t nrgens,
@@ -62,7 +65,6 @@ Congruence::Congruence(cong_t type,
       _killed(0),
       _stop_packing(false),
       _next_report(0),
-      _use_known(false),
       _thread_id(thread_id) {
 
   // TODO: check that the entries in extra/relations are properly defined
@@ -92,18 +94,48 @@ Congruence::Congruence(cong_t type,
   }
 }
 
-Congruence::Congruence(std::string                    type_str,
+Congruence::Congruence(std::string                    type,
+                       size_t                         nrgens,
+                       std::vector<relation_t> const& relations,
+                       std::vector<relation_t> const& extra,
+                       RecVec<coset_t>&               prefill,
+                       size_t                         thread_id)
+    : Congruence(type_from_string(type),
+                 nrgens,
+                 relations,
+                 extra,
+                 prefill,
+                 thread_id) {}
+
+Congruence::Congruence(cong_t                         type,
+                       size_t                         nrgens,
+                       std::vector<relation_t> const& relations,
+                       std::vector<relation_t> const& extra,
+                       RecVec<coset_t>&               prefill,
+                       size_t                         thread_id)
+    : Congruence(type, nrgens, relations, extra, thread_id) {
+  // TODO check table is valid
+  assert(prefill.nr_cols() == _nrgens);
+  assert(prefill.nr_rows() > 0);
+  _table = prefill;
+  init_after_prefill();
+}
+
+Congruence::Congruence(std::string                    type,
                        Semigroup*                     semigroup,
                        std::vector<relation_t> const& extra,
-                       bool                           use_known,
+                       bool                           prefill,
                        size_t                         thread_id)
-    : Congruence(
-          type_from_string(type_str), semigroup, extra, use_known, thread_id) {}
+    : Congruence(type_from_string(type),
+                 semigroup,
+                 extra,
+                 prefill,
+                 thread_id) {}
 
 Congruence::Congruence(cong_t                         type,
                        Semigroup*                     semigroup,
                        std::vector<relation_t> const& extra,
-                       bool                           use_known,
+                       bool                           prefill,
                        size_t                         thread_id)
     : Congruence(type,
                  semigroup->nrgens(),
@@ -111,9 +143,7 @@ Congruence::Congruence(cong_t                         type,
                  extra,
                  thread_id) {
 
-  if (use_known) { // use the right or left Cayley table of semigroup
-    _use_known = true;
-    _active += semigroup->size();
+  if (prefill) { // use the right or left Cayley table of semigroup
 
     if (type == LEFT) {
       _table.append(*semigroup->left_cayley_graph(_report));
@@ -125,38 +155,12 @@ Congruence::Congruence(cong_t                         type,
       (*it)++;
     }
 
-    _id_coset = 0;
-
     for (size_t i = 0; i < _nrgens; i++) {
-      _table.set(_id_coset, i, semigroup->genslookup(i) + 1);
+      _table.set(0, i, semigroup->genslookup(i) + 1);
     }
 
-    _forwd.reserve(_active);
-    _bckwd.reserve(_active);
-
-    for (size_t i = 1; i < _active; i++) {
-      _forwd.push_back(i + 1);
-      _bckwd.push_back(i - 1);
-    }
-    _forwd[0]           = 1;
-    _forwd[_active - 1] = UNDEFINED;
-
-    _last = _active - 1;
-
-    _preim_init.add_rows(semigroup->size());
-    _preim_next.add_rows(semigroup->size());
-
-    for (coset_t c = 0; c < _active; c++) {
-      for (letter_t i = 0; i < _nrgens; i++) {
-        coset_t b = _table.get(c, i);
-        _preim_next.set(c, i, _preim_init.get(b, i));
-        _preim_init.set(b, i, c);
-      }
-    }
-
-    _defined = _active;
+    init_after_prefill();
   } else { // Don't use the right/left Cayley graph
-    _use_known = false;
     std::vector<size_t> relation;
 
     semigroup->reset_next_relation();
@@ -186,6 +190,37 @@ Congruence::Congruence(cong_t                         type,
       }
     }
   }
+}
+
+void Congruence::init_after_prefill() {
+
+  _active = _table.nr_rows();
+  _id_coset = 0;
+
+  _forwd.reserve(_active);
+  _bckwd.reserve(_active);
+
+  for (size_t i = 1; i < _active; i++) {
+    _forwd.push_back(i + 1);
+    _bckwd.push_back(i - 1);
+  }
+  _forwd[0]           = 1;
+  _forwd[_active - 1] = UNDEFINED;
+
+  _last = _active - 1;
+
+  _preim_init.add_rows(_table.nr_rows());
+  _preim_next.add_rows(_table.nr_rows());
+
+  for (coset_t c = 0; c < _active; c++) {
+    for (letter_t i = 0; i < _nrgens; i++) {
+      coset_t b = _table.get(c, i);
+      _preim_next.set(c, i, _preim_init.get(b, i));
+      _preim_init.set(b, i, c);
+    }
+  }
+
+  _defined = _active;
 }
 
 //
@@ -551,13 +586,13 @@ size_t Congruence::word_to_coset(word_t w) {
     // Iterate in reverse order
     for (auto rit = w.crbegin(); rit != w.crend(); ++rit) {
       c = _table.get(c, *rit);
-      //assert(c != UNDEFINED);
+      // assert(c != UNDEFINED);
     }
   } else {
     // Iterate in sequential order
     for (auto it = w.cbegin(); it != w.cend(); ++it) {
       c = _table.get(c, *it);
-      //assert(c != UNDEFINED);
+      // assert(c != UNDEFINED);
     }
   }
   return c;
