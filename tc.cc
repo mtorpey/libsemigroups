@@ -117,6 +117,9 @@ Congruence::Congruence(cong_t                         type,
   // TODO check table is valid
   assert(prefill.nr_cols() == _nrgens);
   assert(prefill.nr_rows() > 0);
+  assert(relations.empty());
+  // todd_coxeter requires that relations is empty if we are using a completely
+  // prefilled table
   _table = prefill;
   init_after_prefill();
 }
