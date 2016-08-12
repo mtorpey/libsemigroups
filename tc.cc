@@ -662,7 +662,8 @@ void Congruence::compress() {
   _table = table;
 }
 
-Congruence* compete(Congruence* cong_t, Congruence* cong_f, bool report) {
+Congruence*
+parallel_todd_coxeter(Congruence* cong_t, Congruence* cong_f, bool report) {
 
   Reporter reporter;
   reporter.report(report);
@@ -703,18 +704,7 @@ Congruence* cong_pairs_enumerate(std::string                    type,
                                  std::vector<relation_t> const& extra,
                                  bool                           report) {
 
-  return compete(new Congruence(type, S, extra, true, 1),
-                 new Congruence(type, S, extra, false, 2),
-                 report);
+  return parallel_todd_coxeter(new Congruence(type, S, extra, true, 1),
+                               new Congruence(type, S, extra, false, 2),
+                               report);
 }
-
-/*Congruence* cong_pairs_enumerate(std::string                    type,
-                                 size_t                         nrgens,
-                                 std::vector<relation_t> const& rels,
-                                 std::vector<relation_t> const& extra,
-                                 bool                           report) {
-
-  return compete(new Congruence(type, nrgens, rels, extra, 1),
-                 new Congruence(type, nrgens, rels, extra, 2),
-                 report);
-}*/

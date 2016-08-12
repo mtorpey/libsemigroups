@@ -185,9 +185,12 @@ class Congruence {
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
+Congruence* parallel_todd_coxeter(Congruence* cong_t,
+                                  Congruence* cong_f,
+                                  bool report = false);
+
 Congruence* cong_pairs_enumerate(std::string,
                                  Semigroup*,
                                  std::vector<relation_t> const&,
                                  bool report = false);
-
 #endif // TC_H_
