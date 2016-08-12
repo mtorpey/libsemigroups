@@ -39,19 +39,6 @@ template <typename T> class RecVec {
     this->add_rows(nr_rows);
   }
 
-  // Copy constructor
-  // @copy const reference to a <RecVec>
-  //
-  // Constructs a copy of the given <RecVec> with the same number of rows and
-  // columns as the original.
-
-  RecVec(const RecVec& copy)
-      : _vec(copy._vec),
-        _nr_used_cols(copy._nr_used_cols),
-        _nr_unused_cols(copy._nr_unused_cols),
-        _nr_rows(copy._nr_rows),
-        _default_val(copy._default_val) {}
-
   // Copy and add columns
   // @copy the <RecVec> which will be copied
   // @nr_cols_to_add the number of columns to be added
