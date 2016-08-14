@@ -18,8 +18,8 @@
 
 // This file contains a class for reporting things during a computation.
 
-#ifndef REPORT_H_
-#define REPORT_H_
+#ifndef SEMIGROUPSPLUSPLUS_REPORT_H_
+#define SEMIGROUPSPLUSPLUS_REPORT_H_
 
 #include <assert.h>
 #include <cxxabi.h>
@@ -29,7 +29,7 @@
 #include <mutex>
 #include <string>
 
-#include "semigroups++/timer.h"
+#include "timer.h"
 
 #define DEFAULT_LEVEL 2
 
@@ -43,7 +43,7 @@ class Reporter {
       : _class(abi::__cxa_demangle(typeid(obj).name(), 0, 0, 0)),
         _timer(),
         _thread_id(thread_id),
-        _level(DEFAULT_LEVEL) {} // TODO init other data members
+        _level(DEFAULT_LEVEL) {}  // FIXME init other data members
 
   explicit Reporter(size_t thread_id = 0)
       : _class(), _timer(), _thread_id(thread_id), _level(DEFAULT_LEVEL) {}
@@ -129,4 +129,4 @@ class Reporter {
   size_t            _level;
 };
 
-#endif // REPORT_H_
+#endif  // SEMIGROUPSPLUSPLUS_REPORT_H_

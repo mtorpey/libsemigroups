@@ -19,8 +19,8 @@
 // This file contains the declaration of a blocks class, which is needed by the
 // bipartitions code.
 
-#ifndef ELEMENTS_H_
-#define ELEMENTS_H_
+#ifndef SEMIGROUPSPLUSPLUS_ELEMENTS_H_
+#define SEMIGROUPSPLUSPLUS_ELEMENTS_H_
 
 #include <assert.h>
 #include <math.h>
@@ -39,8 +39,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-using namespace semiring;
-using namespace std;
+using semiring::Semiring;
+using std::hash;
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -49,7 +49,6 @@ using namespace std;
 ////////////////////////////////////////////////////////////////////////////////
 
 class Element {
-
  public:
   virtual ~Element() {}
 
@@ -100,7 +99,6 @@ namespace std {
 ////////////////////////////////////////////////////////////////////////////////
 
 template <typename S, class T> class ElementWithVectorData : public Element {
-
  public:
   explicit ElementWithVectorData(size_t size) : _vector(new std::vector<S>()) {
     _vector->resize(size);
@@ -156,7 +154,6 @@ template <typename S, class T> class ElementWithVectorData : public Element {
 
 template <typename S, typename T>
 class PartialTransformation : public ElementWithVectorData<S, T> {
-
  public:
   explicit PartialTransformation(std::vector<S>* vector)
       : ElementWithVectorData<S, T>(vector) {}
@@ -169,7 +166,7 @@ class PartialTransformation : public ElementWithVectorData<S, T> {
     return this->_vector->size();
   }
 
-  virtual size_t crank() const override {
+  size_t crank() const override {
     _lookup.clear();
     _lookup.resize(degree(), false);
     size_t r = 0;
@@ -219,9 +216,8 @@ S PartialTransformation<S, T>::_UNDEFINED = (S) -1;
 
 template <typename T>
 class Transformation : public PartialTransformation<T, Transformation<T>> {
-
  public:
-  Transformation(std::vector<T>* vector)
+  explicit Transformation(std::vector<T>* vector)
       : PartialTransformation<T, Transformation<T>>(vector) {}
 
   Element* really_copy(size_t increase_deg_by = 0) const override {
@@ -254,14 +250,12 @@ class Transformation : public PartialTransformation<T, Transformation<T>> {
 
 template <typename T>
 class PartialPerm : public PartialTransformation<T, PartialPerm<T>> {
-
  public:
   explicit PartialPerm(std::vector<T>* vector)
       : PartialTransformation<T, PartialPerm<T>>(vector) {}
 
   // this is required so that we sort in the same way as GAP :(
-  // FIXME this doesn't work
-  virtual bool less(const Element* that) const override {
+  bool less(const Element* that) const override {
     auto pp_this = static_cast<const PartialPerm<T>*>(this);
     auto pp_that = static_cast<const PartialPerm<T>*>(that);
 
@@ -342,9 +336,8 @@ template <typename T> T PartialPerm<T>::_UNDEFINED = (T) -1;
 ////////////////////////////////////////////////////////////////////////////////
 
 class BooleanMat : public ElementWithVectorData<bool, BooleanMat> {
-
  public:
-  BooleanMat(std::vector<bool>* matrix)
+  explicit BooleanMat(std::vector<bool>* matrix)
       : ElementWithVectorData<bool, BooleanMat>(matrix) {}
 
   size_t   complexity() const override;
@@ -361,7 +354,6 @@ class BooleanMat : public ElementWithVectorData<bool, BooleanMat> {
 ////////////////////////////////////////////////////////////////////////////////
 
 class Bipartition : public ElementWithVectorData<u_int32_t, Bipartition> {
-
  public:
   explicit Bipartition(size_t degree)
       : ElementWithVectorData<u_int32_t, Bipartition>(2 * degree),
@@ -391,8 +383,8 @@ class Bipartition : public ElementWithVectorData<u_int32_t, Bipartition> {
   u_int32_t nr_left_blocks();
   u_int32_t nr_right_blocks();
   bool is_transverse_block(size_t index);
-  Blocks* left_blocks();  // FIXME should be const
-  Blocks* right_blocks(); // FIXME should be const
+  Blocks* left_blocks();   // FIXME should be const
+  Blocks* right_blocks();  // FIXME should be const
 
   inline void set_nr_blocks(size_t nr_blocks) {
     _nr_blocks = nr_blocks;
@@ -405,12 +397,12 @@ class Bipartition : public ElementWithVectorData<u_int32_t, Bipartition> {
   inline void set_rank(size_t rank) {
     _rank = rank;
   }
-  // TODO make these methods for ElementWithVectorData
+  // TODO(JDM) make these methods for ElementWithVectorData
   inline typename std::vector<u_int32_t>::iterator begin() const {
     return _vector->begin();
   }
 
-  // TODO make these methods for ElementWithVectorData
+  // TODO(JDM) make these methods for ElementWithVectorData
   inline typename std::vector<u_int32_t>::iterator end() const {
     return _vector->end();
   }
@@ -436,14 +428,14 @@ class Bipartition : public ElementWithVectorData<u_int32_t, Bipartition> {
 ////////////////////////////////////////////////////////////////////////////////
 
 class MatrixOverSemiring
-    : public ElementWithVectorData<long, MatrixOverSemiring> {
+    : public ElementWithVectorData<int64_t, MatrixOverSemiring> {
 
  public:
-  explicit MatrixOverSemiring(std::vector<long>* matrix,
+  explicit MatrixOverSemiring(std::vector<int64_t>* matrix,
                               Semiring*          semiring = nullptr)
       :
 
-        ElementWithVectorData<long, MatrixOverSemiring>(matrix),
+        ElementWithVectorData<int64_t, MatrixOverSemiring>(matrix),
         _semiring(semiring) {}
 
   Semiring* semiring() const;
@@ -451,7 +443,7 @@ class MatrixOverSemiring
 
   size_t         complexity() const override;
   size_t         degree() const override;
-  virtual size_t hash_value() const override;
+  size_t hash_value() const override;
   Element*       identity() const override;
   Element* really_copy(size_t increase_deg_by) const override;
   void redefine(Element const*, Element const*) override;
@@ -470,10 +462,9 @@ class MatrixOverSemiring
 ////////////////////////////////////////////////////////////////////////////////
 
 class ProjectiveMaxPlusMatrix : public MatrixOverSemiring {
-
  public:
-  ProjectiveMaxPlusMatrix(std::vector<long>* matrix, Semiring* semiring)
-      : MatrixOverSemiring(matrix, semiring){};
+  ProjectiveMaxPlusMatrix(std::vector<int64_t>* matrix, Semiring* semiring)
+      : MatrixOverSemiring(matrix, semiring) {}
 
   size_t hash_value() const override;
 
@@ -489,9 +480,8 @@ class ProjectiveMaxPlusMatrix : public MatrixOverSemiring {
 ////////////////////////////////////////////////////////////////////////////////
 
 class PBR : public ElementWithVectorData<std::vector<u_int32_t>, PBR> {
-
  public:
-  PBR(std::vector<std::vector<u_int32_t>>* vector)
+  explicit PBR(std::vector<std::vector<u_int32_t>>* vector)
       : ElementWithVectorData<std::vector<u_int32_t>, PBR>(vector) {}
 
   size_t   complexity() const override;
@@ -505,19 +495,18 @@ class PBR : public ElementWithVectorData<std::vector<u_int32_t>, PBR> {
 
   void x_dfs(u_int32_t          n,
              u_int32_t          i,
-             u_int32_t          v, // the vertex we're currently doing
-             std::vector<bool>& x_seen,
-             std::vector<bool>& y_seen,
+             u_int32_t          v,
              PBR const*         x,
              PBR const*         y);
 
   void y_dfs(u_int32_t          n,
              u_int32_t          i,
-             u_int32_t          v, // the vertex we're currently doing
-             std::vector<bool>& x_seen,
-             std::vector<bool>& y_seen,
+             u_int32_t          v,
              PBR const*         x,
              PBR const*         y);
+
+  static std::vector<bool> x_seen;
+  static std::vector<bool> y_seen;
 };
 
-#endif // ELEMENTS_H_
+#endif  // SEMIGROUPSPLUSPLUS_ELEMENTS_H_

@@ -19,8 +19,8 @@
 // This file contains the declaration of a blocks class, which is needed by the
 // bipartitions code.
 
-#ifndef BLOCKS_H_
-#define BLOCKS_H_
+#ifndef SEMIGROUPSPLUSPLUS_BLOCKS_H_
+#define SEMIGROUPSPLUSPLUS_BLOCKS_H_
 
 #include <assert.h>
 
@@ -37,7 +37,6 @@
 // transverse and false if it is not.
 
 class Blocks {
-
  public:
   Blocks() : _blocks(nullptr), _lookup(nullptr), _nr_blocks(0), _rank(0) {}
 
@@ -66,7 +65,6 @@ class Blocks {
         _lookup(nullptr),
         _nr_blocks(copy._nr_blocks),
         _rank(copy._rank) {
-
     if (copy._blocks != nullptr) {
       assert(copy._lookup != nullptr);
       _blocks = new std::vector<u_int32_t>(*copy._blocks);
@@ -174,4 +172,4 @@ class Blocks {
   static u_int32_t        UNDEFINED;
 };
 
-#endif // BLOCKS_H_
+#endif  // SEMIGROUPSPLUSPLUS_BLOCKS_H_

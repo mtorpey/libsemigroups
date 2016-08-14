@@ -16,8 +16,8 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef SEMIRING_H_
-#define SEMIRING_H_
+#ifndef SEMIGROUPSPLUSPLUS_SEMIRING_H_
+#define SEMIGROUPSPLUSPLUS_SEMIRING_H_
 
 #include <limits.h>
 
@@ -48,7 +48,6 @@ namespace semiring {
   // semirings.
 
   class Semiring {
-
    public:
     virtual ~Semiring() {}
 
@@ -57,39 +56,39 @@ namespace semiring {
     // semiring.
     //
     // @return the one of the semiring.
-    virtual long one() const = 0;
+    virtual int64_t one() const = 0;
 
     // Semiring additive identity.
     // Method for finding the additive identity, or zero, of the
     // semiring.
     //
     // @return the zero of the semiring.
-    virtual long zero() const = 0;
+    virtual int64_t zero() const = 0;
 
     // Addition in the semiring.
-    // @x any long int
-    // @y any long int
+    // @x any int64_t int
+    // @y any int64_t int
     //
     // Method for finding the sum of two elements in the
     // semiring.
     // @return the sum of x and y in the semiring.
-    virtual long plus(long x, long y) const = 0;
+    virtual int64_t plus(int64_t x, int64_t y) const = 0;
 
     // Multiplication in the semiring.
-    // @x any long int
-    // @y any long int
+    // @x any int64_t int
+    // @y any int64_t int
     //
     // Method for finding the product of two elements in the
     // semiring.
     // @return the product of x and y in the semiring.
-    virtual long prod(long x, long y) const = 0;
+    virtual int64_t prod(int64_t x, int64_t y) const = 0;
 
     // Threshold of the semiring.
     //
     // Method for finding the threshold of a semiring. The default value is
     // -1 (undefined).
     // @return -1
-    virtual long threshold() const {
+    virtual int64_t threshold() const {
       return -1;
     }
 
@@ -98,7 +97,7 @@ namespace semiring {
     // Method for finding the period of a semiring. The default value is
     // -1 (undefined).
     // @return -1
-    virtual long period() const {
+    virtual int64_t period() const {
       return -1;
     }
   };
@@ -107,7 +106,6 @@ namespace semiring {
   //
   // This class implements ring of integers.
   class Integers : public Semiring {
-
    public:
     // Default constructor.
     Integers() : Semiring() {}
@@ -116,7 +114,7 @@ namespace semiring {
     // This method returns the multiplicative identity, or one, of the ring.
     //
     // @return the integer 1.
-    long one() const override {
+    int64_t one() const override {
       return 1;
     }
 
@@ -124,25 +122,25 @@ namespace semiring {
     // This method returns the additive identity, or zero, of the ring.
     //
     // @return the integer 0.
-    long zero() const override {
+    int64_t zero() const override {
       return 0;
     }
 
     // Multiplication in the integers.
-    // @x any long int
-    // @y any long int
+    // @x any int64_t int
+    // @y any int64_t int
     //
     // @return the product x \* y.
-    long prod(long x, long y) const override {
+    int64_t prod(int64_t x, int64_t y) const override {
       return x * y;
     }
 
     // Addition in the prime field.
-    // @x any long int
-    // @y any long int
+    // @x any int64_t int
+    // @y any int64_t int
     //
     // @return sum x + y.
-    long plus(long x, long y) const override {
+    int64_t plus(int64_t x, int64_t y) const override {
       return x + y;
     }
   };
@@ -151,19 +149,18 @@ namespace semiring {
   //
   // This class implements finite fields of prime order only.
   class PrimeField : public Semiring {
-
    public:
     // Default constructor.
     // @n the size of the finite field, this must be a prime number but this
     // is not checked.
-    explicit PrimeField(long n) : Semiring(), _n(n) {}
+    explicit PrimeField(int64_t n) : Semiring(), _n(n) {}
 
     // Semiring multiplicative identity.
     // This method returns the multiplicative identity, or one, of the prime
     // field.
     //
     // @return the integer 1.
-    long one() const override {
+    int64_t one() const override {
       return 1;
     }
 
@@ -171,46 +168,45 @@ namespace semiring {
     // This method returns the additive identity, or zero, of the prime field.
     //
     // @return the integer 0.
-    long zero() const override {
+    int64_t zero() const override {
       return 0;
     }
 
     // Multiplication in the prime field.
-    // @x any long int
-    // @y any long int
+    // @x any int64_t int
+    // @y any int64_t int
     //
     // @return the integer (x \* y) mod the size of the prime field.
-    long prod(long x, long y) const override {
+    int64_t prod(int64_t x, int64_t y) const override {
       return (x * y) % _n;
     }
 
     // Addition in the prime field.
-    // @x any long int
-    // @y any long int
+    // @x any int64_t int
+    // @y any int64_t int
     //
     // @return the integer (x + y) mod the size of the prime field.
-    long plus(long x, long y) const override {
+    int64_t plus(int64_t x, int64_t y) const override {
       return (x + y) % _n;
     }
 
     // Finite field size.
     //
     // @return the size of the prime field.
-    long size() const {
+    int64_t size() const {
       return _n;
     }
 
    private:
-    long _n;
+    int64_t _n;
   };
 
   // Max-plus semiring.
   //
   // The *max-plus semiring* consists of the set of natural numbers together
   // with negative infinity with operations max and plus. Negative infinity is
-  // represented by LONG_MIN.
+  // represented by int64_t_MIN.
   class MaxPlusSemiring : public Semiring {
-
    public:
     // Default constructor.
     MaxPlusSemiring() : Semiring() {}
@@ -220,7 +216,7 @@ namespace semiring {
     // max-plus semiring.
     //
     // @return the integer 0.
-    long one() const override {
+    int64_t one() const override {
       return 0;
     }
 
@@ -228,17 +224,17 @@ namespace semiring {
     // This method returns the additive identity, or zero, of the
     // max-plus semiring.
     //
-    // @return LONG_MIN.
-    long zero() const override {
+    // @return int64_t_MIN.
+    int64_t zero() const override {
       return LONG_MIN;
     }
 
     // Multiplication in the semiring.
-    // @x any long int
-    // @y any long int
+    // @x any int64_t int
+    // @y any int64_t int
     //
     // @return LONG_MIN if x or y equals LONG_MIN, otherwise return x + y.
-    long prod(long x, long y) const override {
+    int64_t prod(int64_t x, int64_t y) const override {
       if (x == LONG_MIN || y == LONG_MIN) {
         return LONG_MIN;
       }
@@ -246,11 +242,11 @@ namespace semiring {
     }
 
     // Addition in the semiring.
-    // @x any long int
-    // @y any long int
+    // @x any int64_t int
+    // @y any int64_t int
     //
     // @return the maximum of x and y.
-    long plus(long x, long y) const override {
+    int64_t plus(int64_t x, int64_t y) const override {
       return std::max(x, y);
     }
   };
@@ -262,7 +258,6 @@ namespace semiring {
   // represented by LONG_MAX.
 
   class MinPlusSemiring : public Semiring {
-
    public:
     // Default constructor.
     MinPlusSemiring() : Semiring() {}
@@ -272,7 +267,7 @@ namespace semiring {
     // min-plus semiring.
     //
     // @return the integer 0.
-    long one() const override {
+    int64_t one() const override {
       return 0;
     }
 
@@ -281,16 +276,16 @@ namespace semiring {
     // min-plus semiring.
     //
     // @return LONG_MAX.
-    long zero() const override {
+    int64_t zero() const override {
       return LONG_MAX;
     }
 
     // Multiplication in the semiring.
-    // @x any long int
-    // @y any long int
+    // @x any int64_t int
+    // @y any int64_t int
     //
     // @return LONG_MAX if x or y equals LONG_MAX, otherwise return x + y.
-    long prod(long x, long y) const override {
+    int64_t prod(int64_t x, int64_t y) const override {
       if (x == LONG_MAX || y == LONG_MAX) {
         return LONG_MAX;
       }
@@ -298,11 +293,11 @@ namespace semiring {
     }
 
     // Addition in the semiring.
-    // @x any long int
-    // @y any long int
+    // @x any int64_t int
+    // @y any int64_t int
     //
     // @return the minimum of x and y.
-    long plus(long x, long y) const override {
+    int64_t plus(int64_t x, int64_t y) const override {
       return std::min(x, y);
     }
   };
@@ -312,12 +307,11 @@ namespace semiring {
   // This class provides common methods for its subclasses
   // <TropicalMaxPlusSemiring> and <TropicalMinPlusSemiring>.
   class TropicalSemiring : public Semiring {
-
    public:
     // Default constructor.
     // @threshold the largest integer in the semiring (or equivalently the
     // size of the semiring minus 2).
-    explicit TropicalSemiring(long threshold)
+    explicit TropicalSemiring(int64_t threshold)
         : Semiring(), _threshold(threshold) {}
 
     // Threshold of a tropical semiring.
@@ -325,12 +319,12 @@ namespace semiring {
     // **threshold**.
     //
     // @return the threshold of the semiring.
-    long threshold() const override {
+    int64_t threshold() const override {
       return _threshold;
     }
 
    private:
-    long _threshold;
+    int64_t _threshold;
   };
 
   // Tropical max-plus semiring.
@@ -339,12 +333,11 @@ namespace semiring {
   // for some value *t* (called the **threshold** of the semiring) and negative
   // infinity. Negative infinity is represented by LONG_MIN.
   class TropicalMaxPlusSemiring : public TropicalSemiring {
-
    public:
     // Default constructor.
     // @threshold the largest integer in the semiring (or equivalently the
     // size of the semiring minus 2).
-    explicit TropicalMaxPlusSemiring(long threshold)
+    explicit TropicalMaxPlusSemiring(int64_t threshold)
         : TropicalSemiring(threshold) {}
 
     // Semiring multiplicative identity.
@@ -352,7 +345,7 @@ namespace semiring {
     // tropical max-plus semiring.
     //
     // @return the integer 0.
-    long one() const override {
+    int64_t one() const override {
       return 0;
     }
 
@@ -361,17 +354,17 @@ namespace semiring {
     // tropical max-plus semiring.
     //
     // @return the integer LONG_MIN.
-    long zero() const override {
+    int64_t zero() const override {
       return LONG_MIN;
     }
 
     // Multiplication in the semiring.
-    // @x any long int
-    // @y any long int
+    // @x any int64_t int
+    // @y any int64_t int
     //
     // @return LONG_MIN if x or y equals LONG_MIN, otherwise return the
     // minimum of x + y and the threshold of the semiring.
-    long prod(long x, long y) const override {
+    int64_t prod(int64_t x, int64_t y) const override {
       if (x == LONG_MIN || y == LONG_MIN) {
         return LONG_MIN;
       }
@@ -379,12 +372,12 @@ namespace semiring {
     }
 
     // Multiplication in the semiring.
-    // @x any long int
-    // @y any long int
+    // @x any int64_t int
+    // @y any int64_t int
     //
     // @return the minimum of (the maximum of x and y) and the threshold of
     // the semiring.
-    long plus(long x, long y) const override {
+    int64_t plus(int64_t x, int64_t y) const override {
       return std::min((std::max(x, y)), threshold());
     }
   };
@@ -395,12 +388,11 @@ namespace semiring {
   // for some value *t* (called the **threshold** of the semiring) and
   // infinity. Infinity is represented by LONG_MAX.
   class TropicalMinPlusSemiring : public TropicalSemiring {
-
    public:
     // Default constructor.
     // @threshold the largest integer in the semiring (or equivalently the
     // size of the semiring minus 2).
-    explicit TropicalMinPlusSemiring(long threshold)
+    explicit TropicalMinPlusSemiring(int64_t threshold)
         : TropicalSemiring(threshold) {}
 
     // Semiring multiplicative identity.
@@ -408,7 +400,7 @@ namespace semiring {
     // tropical min-plus semiring.
     //
     // @return the integer 0.
-    long one() const override {
+    int64_t one() const override {
       return 0;
     }
 
@@ -417,17 +409,17 @@ namespace semiring {
     // tropical min-plus semiring.
     //
     // @return the integer LONG_MAX.
-    long zero() const override {
+    int64_t zero() const override {
       return LONG_MAX;
     }
 
     // Multiplication in the semiring.
-    // @x any long int
-    // @y any long int
+    // @x any int64_t int
+    // @y any int64_t int
     //
     // @return LONG_MAX if x or y equals LONG_MAX, otherwise return the
     // minimum of x + y and the threshold of the semiring.
-    long prod(long x, long y) const override {
+    int64_t prod(int64_t x, int64_t y) const override {
       if (x == LONG_MAX || y == LONG_MAX) {
         return LONG_MAX;
       }
@@ -435,12 +427,12 @@ namespace semiring {
     }
 
     // Multiplication in the semiring.
-    // @x any long int
-    // @y any long int
+    // @x any int64_t int
+    // @y any int64_t int
     //
     // @return LONG_MAX if either of x and y is LONG_MAX, and otherwise the
     // minimum of x, y, and the threshold of the semiring.
-    long plus(long x, long y) const override {
+    int64_t plus(int64_t x, int64_t y) const override {
       if (x == LONG_MAX && y == LONG_MAX) {
         return LONG_MAX;
       }
@@ -455,12 +447,11 @@ namespace semiring {
   // operations addition and multiplication modulo the congruence *t = t + p*.
 
   class NaturalSemiring : public Semiring {
-
    public:
     // Default constructor.
     // @threshold the threshold, should be positive, this is not checked.
     // @period    the period, should be non-negative, this is not checked.
-    NaturalSemiring(long threshold, long period)
+    NaturalSemiring(int64_t threshold, int64_t period)
         : Semiring(), _threshold(threshold), _period(period) {}
 
     // Semiring multiplicative identity.
@@ -468,7 +459,7 @@ namespace semiring {
     // semiring.
     //
     // @return the integer 1.
-    long one() const override {
+    int64_t one() const override {
       return 1;
     }
 
@@ -477,27 +468,27 @@ namespace semiring {
     // semiring.
     //
     // @return the integer 0.
-    long zero() const override {
+    int64_t zero() const override {
       return 0;
     }
 
     // Multiplication in the semiring.
-    // @x any long int
-    // @y any long int
+    // @x any int64_t int
+    // @y any int64_t int
     //
     // @return x \* y modulo the congruence *t = t + p* where *t* and *p* are
     // the threshold and period of the semiring, respectively.
-    long prod(long x, long y) const override {
+    int64_t prod(int64_t x, int64_t y) const override {
       return thresholdperiod(x * y);
     }
 
     // Addition in the semiring.
-    // @x any long int
-    // @y any long int
+    // @x any int64_t int
+    // @y any int64_t int
     //
     // @return x + y modulo the congruence *t = t + p* where *t* and *p* are
     // the threshold and period of the semiring, respectively.
-    long plus(long x, long y) const override {
+    int64_t plus(int64_t x, int64_t y) const override {
       return thresholdperiod(x + y);
     }
 
@@ -507,7 +498,7 @@ namespace semiring {
     // operations addition and multiplication modulo the congruence *t = t + p*.
     //
     // @return the threshold of the semiring.
-    long threshold() const override {
+    int64_t threshold() const override {
       return _threshold;
     }
 
@@ -517,20 +508,20 @@ namespace semiring {
     // operations addition and multiplication modulo the congruence *t = t + p*.
     //
     // @return the period of the semiring.
-    long period() const override {
+    int64_t period() const override {
       return _period;
     }
 
    private:
-    long thresholdperiod(long x) const {
+    int64_t thresholdperiod(int64_t x) const {
       if (x > _threshold) {
         return _threshold + (x - _threshold) % _period;
       }
       return x;
     }
 
-    long _threshold;
-    long _period;
+    int64_t _threshold;
+    int64_t _period;
   };
-} // namespace semiring
-#endif // SEMIRING_H_
+}  // namespace semiring
+#endif  // SEMIGROUPSPLUSPLUS_SEMIRING_H_

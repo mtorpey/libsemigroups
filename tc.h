@@ -16,8 +16,8 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef TC_H_
-#define TC_H_
+#ifndef SEMIGROUPSPLUSPLUS_TC_H_
+#define SEMIGROUPSPLUSPLUS_TC_H_
 
 #include <atomic>
 #include <forward_list>
@@ -27,12 +27,11 @@
 #include <utility>
 #include <vector>
 
-#include "semigroups++/elements.h"
-#include "semigroups++/report.h"
-#include "semigroups++/semigroups.h"
+#include "elements.h"
+#include "report.h"
+#include "semigroups.h"
 
 class Congruence {
-
   enum cong_t { LEFT = 0, RIGHT = 1, TWOSIDED = 2 };
 
   typedef size_t  coset_t;
@@ -110,18 +109,18 @@ class Congruence {
 
   cong_t _type;
 
-  bool _tc_done; // Has todd_coxeter already been run?
+  bool _tc_done;  // Has todd_coxeter already been run?
   bool _is_compressed;
 
-  coset_t                 _id_coset; // TODO: Remove?
+  coset_t                 _id_coset;  // TODO(JDM) Remove?
   size_t                  _nrgens;
   std::vector<relation_t> _relations;
   std::vector<relation_t> _extra;
 
-  size_t _active; // Number of active cosets
+  size_t _active;  // Number of active cosets
 
-  size_t _pack; // Nr of active cosets allowed before a
-                // packing phase starts
+  size_t _pack;  // Nr of active cosets allowed before a
+                 // packing phase starts
 
   std::atomic<bool> _stop;
 
@@ -183,7 +182,7 @@ class Congruence {
   bool   _report;
   size_t _defined;
   size_t _killed;
-  size_t _stop_packing; // TODO: make this a bool?
+  size_t _stop_packing;  // TODO(JDM): make this a bool?
   size_t _next_report;
 
   size_t _thread_id;
@@ -204,4 +203,4 @@ Congruence* cong_pairs_enumerate(std::string,
                                  Semigroup*,
                                  std::vector<relation_t> const&,
                                  bool report = false);
-#endif // TC_H_
+#endif  // SEMIGROUPSPLUSPLUS_TC_H_

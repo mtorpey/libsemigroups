@@ -16,8 +16,8 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef RECVEC_H_
-#define RECVEC_H_
+#ifndef SEMIGROUPSPLUSPLUS_RECVEC_H_
+#define SEMIGROUPSPLUSPLUS_RECVEC_H_
 
 #include <assert.h>
 
@@ -30,7 +30,6 @@
 // <RecVec>.
 
 template <typename T> class RecVec {
-
  public:
   // Default constructor
   // @nr_cols the number of columns in the <RecVec> being constructed
@@ -63,7 +62,6 @@ template <typename T> class RecVec {
         _nr_unused_cols(copy._nr_unused_cols),
         _nr_rows(copy.nr_rows()),
         _default_val(copy._default_val) {
-
     if (nr_cols_to_add <= _nr_unused_cols) {
       _vec = copy._vec;
       _nr_used_cols += nr_cols_to_add;
@@ -118,7 +116,6 @@ template <typename T> class RecVec {
   // fewer reallocations.
 
   void add_cols(size_t nr) {
-
     if (nr <= _nr_unused_cols) {
       _nr_used_cols += nr;
       _nr_unused_cols -= nr;
@@ -219,7 +216,7 @@ template <typename T> class RecVec {
       std::copy(copy._vec.begin(),
                 copy._vec.end(),
                 _vec.begin() + (_nr_used_cols + _nr_unused_cols) * old_nr_rows);
-    } else { // TODO improve this
+    } else {  // TODO(JDM) improve this
       for (size_t i = old_nr_rows; i < _nr_rows; i++) {
         for (size_t j = 0; j < _nr_used_cols; j++) {
           set(i, j, copy.get(i - old_nr_rows, j));
@@ -251,4 +248,4 @@ template <typename T> class RecVec {
   T              _default_val;
 };
 
-#endif // RECVEC_H_
+#endif  // SEMIGROUPSPLUSPLUS_RECVEC_H_

@@ -19,6 +19,6 @@
 // This file contains the declaration of a static data member for the blocks
 // class.
 
-#include "semigroups++/blocks.h"
+#include "blocks.h"
 
 u_int32_t Blocks::UNDEFINED = -1;

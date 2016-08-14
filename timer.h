@@ -16,8 +16,8 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef TIMER_H_
-#define TIMER_H_
+#ifndef SEMIGROUPSPLUSPLUS_TIMER_H_
+#define SEMIGROUPSPLUSPLUS_TIMER_H_
 
 #include <assert.h>
 #include <chrono>
@@ -29,8 +29,7 @@
 // the standard output.
 
 class Timer {
-
-  typedef std::chrono::duration<long long int, std::nano> nano_t;
+  typedef std::chrono::duration<int64_t, std::nano> nano_t;
   typedef std::chrono::steady_clock::time_point time_point_t;
 
  public:
@@ -114,4 +113,4 @@ class Timer {
   }
 };
 
-#endif // TIMER_H_
+#endif  // SEMIGROUPSPLUSPLUS_TIMER_H_

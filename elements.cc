@@ -19,7 +19,9 @@
 // This file contains implementations of the non-template derived classes of
 // the Elements abstract base class.
 
-#include "semigroups++/elements.h"
+#include "elements.h"
+
+#include <algorithm>
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -319,7 +321,7 @@ size_t MatrixOverSemiring::hash_value() const {
 
 // the identity
 Element* MatrixOverSemiring::identity() const {
-  std::vector<long>* matrix(new std::vector<long>());
+  std::vector<int64_t>* matrix(new std::vector<int64_t>());
   matrix->resize(_vector->size(), _semiring->zero());
 
   size_t n = this->degree();
@@ -337,7 +339,6 @@ Element* MatrixOverSemiring::really_copy(size_t increase_degree_by) const {
 }
 
 void MatrixOverSemiring::redefine(Element const* x, Element const* y) {
-
   MatrixOverSemiring const* xx(static_cast<MatrixOverSemiring const*>(x));
   MatrixOverSemiring const* yy(static_cast<MatrixOverSemiring const*>(y));
 
@@ -347,7 +348,7 @@ void MatrixOverSemiring::redefine(Element const* x, Element const* y) {
 
   for (size_t i = 0; i < deg; i++) {
     for (size_t j = 0; j < deg; j++) {
-      long v = _semiring->zero();
+      int64_t v = _semiring->zero();
       for (size_t k = 0; k < deg; k++) {
         v = _semiring->plus(
             v, _semiring->prod(xx->at(i * deg + k), yy->at(k * deg + j)));
@@ -355,7 +356,7 @@ void MatrixOverSemiring::redefine(Element const* x, Element const* y) {
       _vector->at(i * deg + j) = v;
     }
   }
-  after(); // post process this
+  after();  // post process this
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -365,7 +366,6 @@ void MatrixOverSemiring::redefine(Element const* x, Element const* y) {
 ////////////////////////////////////////////////////////////////////////////////
 
 size_t ProjectiveMaxPlusMatrix::hash_value() const {
-
   size_t seed = 0;
   for (size_t i = 0; i < _vector->size(); i++) {
     seed = ((seed << 4) + _vector->at(i));
@@ -374,8 +374,8 @@ size_t ProjectiveMaxPlusMatrix::hash_value() const {
 }
 
 void ProjectiveMaxPlusMatrix::after() {
-  long   norm = *std::max_element(_vector->begin(), _vector->end());
-  size_t deg  = pow(this->degree(), 2);
+  int64_t norm = *std::max_element(_vector->begin(), _vector->end());
+  size_t  deg  = pow(this->degree(), 2);
 
   for (size_t i = 0; i < deg; i++) {
     if (_vector->at(i) != LONG_MIN) {
@@ -389,6 +389,9 @@ void ProjectiveMaxPlusMatrix::after() {
 // Partitioned binary relations (PBRs)
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+
+std::vector<bool> PBR::x_seen;
+std::vector<bool> PBR::y_seen;
 
 size_t PBR::complexity() const {
   return pow((2 * this->degree()), 3);
@@ -424,8 +427,6 @@ Element* PBR::identity() const {
   return new PBR(adj);
 }
 
-// FIXME this allocates lots of memory on every call, maybe better to keep
-// the data in the class and overwrite it.
 // FIXME also we repeatedly search in the same part of the graph, and so
 // there is probably a lot of repeated work in the dfs. Better use some version
 // of Floyd-Warshall
@@ -442,13 +443,13 @@ void PBR::redefine(Element const* xx, Element const* yy) {
     (*_vector)[i].clear();
   }
 
-  std::vector<bool> x_seen;
-  std::vector<bool> y_seen;
+  x_seen.clear();
   x_seen.resize(2 * n, false);
+  y_seen.clear();
   y_seen.resize(2 * n, false);
 
   for (size_t i = 0; i < n; i++) {
-    x_dfs(n, i, i, x_seen, y_seen, x, y);
+    x_dfs(n, i, i, x, y);
     for (size_t j = 0; j < 2 * n; j++) {
       x_seen.at(j) = false;
       y_seen.at(j) = false;
@@ -456,7 +457,7 @@ void PBR::redefine(Element const* xx, Element const* yy) {
   }
 
   for (size_t i = n; i < 2 * n; i++) {
-    y_dfs(n, i, i, x_seen, y_seen, x, y);
+    y_dfs(n, i, i, x, y);
     for (size_t j = 0; j < 2 * n; j++) {
       x_seen.at(j) = false;
       y_seen.at(j) = false;
@@ -475,41 +476,36 @@ void PBR::add_adjacency(size_t vertex1, size_t vertex2) {
   }
 }
 
-void PBR::x_dfs(u_int32_t          n,
-                u_int32_t          i,
-                u_int32_t          v, // the vertex we're currently doing
-                std::vector<bool>& x_seen,
-                std::vector<bool>& y_seen,
-                PBR const*         x,
-                PBR const*         y) {
-
+void PBR::x_dfs(u_int32_t  n,
+                u_int32_t  i,
+                u_int32_t  v,  // the vertex we're currently doing
+                PBR const* x,
+                PBR const* y) {
   if (!x_seen.at(i)) {
     x_seen.at(i) = true;
     for (auto j : x->at(i)) {
       if (j < n) {
         add_adjacency(v, j);
       } else {
-        y_dfs(n, j - n, v, x_seen, y_seen, x, y);
+        y_dfs(n, j - n, v, x, y);
       }
     }
   }
 }
 
-void PBR::y_dfs(u_int32_t          n,
-                u_int32_t          i,
-                u_int32_t          v, // the vertex we're currently doing
-                std::vector<bool>& x_seen,
-                std::vector<bool>& y_seen,
-                PBR const*         x,
-                PBR const*         y) {
+void PBR::y_dfs(u_int32_t  n,
+                u_int32_t  i,
+                u_int32_t  v,  // the vertex we're currently doing
 
+                PBR const* x,
+                PBR const* y) {
   if (!y_seen.at(i)) {
     y_seen.at(i) = true;
     for (auto j : y->at(i)) {
       if (j >= n) {
         add_adjacency(v, j);
       } else {
-        x_dfs(n, j + n, v, x_seen, y_seen, x, y);
+        x_dfs(n, j + n, v, x, y);
       }
     }
   }

@@ -18,6 +18,7 @@
 
 #include "tc.h"
 
+#include <algorithm>
 #include <thread>
 
 size_t   Congruence::INFTY     = -1;
@@ -49,7 +50,6 @@ Congruence::Congruence(std::string                    type,
 
 Congruence::Congruence(cong_t type,
                        size_t nrgens,
-                       // TODO default these to empty vectors
                        std::vector<relation_t> const& relations,
                        std::vector<relation_t> const& extra,
                        size_t                         thread_id)
@@ -78,7 +78,7 @@ Congruence::Congruence(cong_t type,
       _next_report(0),
       _thread_id(thread_id) {
 
-  // TODO: check that the entries in extra/relations are properly defined
+  // TODO(JDM): check that the entries in extra/relations are properly defined
   // i.e. that every entry is at most nrgens - 1
 
   switch (_type) {
@@ -93,7 +93,7 @@ Congruence::Congruence(cong_t type,
         std::reverse(rel.second.begin(), rel.second.end());
       }
       break;
-    case RIGHT: // do nothing
+    case RIGHT:  // do nothing
       _extra = extra;
       break;
     case TWOSIDED:
@@ -125,7 +125,7 @@ Congruence::Congruence(cong_t                         type,
                        RecVec<coset_t>&               prefill,
                        size_t                         thread_id)
     : Congruence(type, nrgens, relations, extra, thread_id) {
-  // TODO check table is valid
+  // TODO(JDM) check table is valid
   assert(prefill.nr_cols() == _nrgens);
   assert(prefill.nr_rows() > 0);
   assert(relations.empty());
@@ -156,9 +156,7 @@ Congruence::Congruence(cong_t                         type,
                  std::vector<relation_t>(),
                  extra,
                  thread_id) {
-
-  if (prefill) { // use the right or left Cayley table of semigroup
-
+  if (prefill) {  // use the right or left Cayley table of semigroup
     if (type == LEFT) {
       _table.append(*semigroup->left_cayley_graph(_report));
     } else {
@@ -174,7 +172,7 @@ Congruence::Congruence(cong_t                         type,
     }
 
     init_after_prefill();
-  } else { // Don't use the right/left Cayley graph
+  } else {  // Don't use the right/left Cayley graph
     std::vector<size_t> relation;
 
     semigroup->reset_next_relation();
@@ -182,10 +180,10 @@ Congruence::Congruence(cong_t                         type,
 
     if (relation.size() == 2) {
       // This is for the case when there are duplicate gens
-      assert(false); // FIXME
+      assert(false);  // FIXME
     }
     if (_type == LEFT) {
-      while (!relation.empty()) { // TODO improve this
+      while (!relation.empty()) {  // TODO(JDM) improve this
         word_t lhs = *(semigroup->factorisation(relation[0]));
         lhs.push_back(relation[1]);
         std::reverse(lhs.begin(), lhs.end());
@@ -207,7 +205,6 @@ Congruence::Congruence(cong_t                         type,
 }
 
 void Congruence::init_after_prefill() {
-
   _active = _table.nr_rows();
   _id_coset = 0;
 
@@ -242,7 +239,6 @@ void Congruence::init_after_prefill() {
 // Create a new active coset for coset c to map to under generator a
 //
 void Congruence::new_coset(coset_t const& c, letter_t const& a) {
-
   if (_stop) {
     return;
   }
@@ -279,8 +275,6 @@ void Congruence::new_coset(coset_t const& c, letter_t const& a) {
   // Set c as the one preimage of the new coset
   _preim_init.set(_last, a, c);
   _preim_next.set(c, a, UNDEFINED);
-
-  // TODO something with pos?
 }
 
 //
@@ -301,10 +295,7 @@ void Congruence::identify_cosets(coset_t lhs, coset_t rhs) {
     coset_t tmp = lhs;
     lhs         = rhs;
     rhs         = tmp;
-    // TODO: Should this be done after the (lhs = -_bckwd[lhs];) step?
   }
-
-  // TODO something with pos?
 
   while (!_stop) {
     // If <lhs> is not active, use the coset it was identified with
@@ -320,7 +311,7 @@ void Congruence::identify_cosets(coset_t lhs, coset_t rhs) {
       _active--;
       // If any "controls" point to <rhs>, move them back one in the list
       if (rhs == _current) {
-        // TODO: should we go forwd instead?
+        // TODO(JDM) should we go forwd instead?
         _current = _bckwd[_current];
       }
       if (rhs == _current_no_add) {
@@ -348,11 +339,12 @@ void Congruence::identify_cosets(coset_t lhs, coset_t rhs) {
         // Let <v> be the first PREIMAGE of <rhs>
         coset_t v = _preim_init.get(rhs, i);
         while (v != UNDEFINED) {
-          _table.set(v, i, lhs); // Replace <rhs> by <lhs> in the table
-          coset_t u = _preim_next.get(v, i); // Get <rhs>'s next preimage
+          _table.set(v, i, lhs);  // Replace <rhs> by <lhs> in the table
+          coset_t u = _preim_next.get(v, i);  // Get <rhs>'s next preimage
           _preim_next.set(v, i, _preim_init.get(lhs, i));
-          _preim_init.set(lhs, i, v); // v is now a preimage of <lhs>, not <rhs>
-          v = u; // Let <v> be <rhs>'s next preimage, and repeat
+          _preim_init.set(lhs, i, v);
+          // v is now a preimage of <lhs>, not <rhs>
+          v = u;  // Let <v> be <rhs>'s next preimage, and repeat
         }
 
         // Now let <v> be the IMAGE of <rhs>
@@ -382,7 +374,7 @@ void Congruence::identify_cosets(coset_t lhs, coset_t rhs) {
             // Add (u,v) to the stack of pairs to be identified
             _lhs_stack.push(std::min(u, v));
             _rhs_stack.push(std::max(u, v));
-            // TODO: Is the min/max thing necessary?
+            // TODO(JDM) Is the min/max thing necessary?
           }
         }
       }
@@ -406,7 +398,6 @@ void Congruence::identify_cosets(coset_t lhs, coset_t rhs) {
 // function will not create any new cosets.
 //
 void Congruence::trace(coset_t const& c, relation_t const& rel, bool add) {
-
   if (_stop) {
     return;
   }
@@ -481,7 +472,7 @@ void Congruence::trace(coset_t const& c, relation_t const& rel, bool add) {
         _preim_next.set(rhs, b, UNDEFINED);
       }
     } else {
-      return; // Packing phase: do nothing
+      return;  // Packing phase: do nothing
     }
   } else if (u == UNDEFINED && v != UNDEFINED) {
     // Set lhs^a to v
@@ -502,10 +493,9 @@ void Congruence::trace(coset_t const& c, relation_t const& rel, bool add) {
 //
 // todd_coxeter( limit )
 // Apply the TC algorithm until the coset table is complete.
-// TODO: <limit> should be the max table size; it is currently ignored.
+// TODO(JDM): <limit> should be the max table size; it is currently ignored.
 //
 void Congruence::todd_coxeter(size_t limit) {
-
   _reporter.report(_report);
   _reporter.set_class_name(*this);
 
@@ -516,7 +506,7 @@ void Congruence::todd_coxeter(size_t limit) {
 
   // Apply each "extra" relation to the first coset only
   for (relation_t const& rel : _extra) {
-    trace(_id_coset, rel); // Allow new cosets
+    trace(_id_coset, rel);  // Allow new cosets
     if (_stop) {
       return;
     }
@@ -528,7 +518,7 @@ void Congruence::todd_coxeter(size_t limit) {
   do {
     // Apply each relation to the "_current" coset
     for (relation_t const& rel : _relations) {
-      trace(_current, rel); // Allow new cosets
+      trace(_current, rel);  // Allow new cosets
     }
 
     // If the number of active cosets is too high, start a packing phase
@@ -543,14 +533,14 @@ void Congruence::todd_coxeter(size_t limit) {
       _reporter.unlock();
       _killed = _defined - _active;
 
-      size_t oldactive = _active;  // Keep this for stats
-      _current_no_add  = _current; // Start packing from _current
-      // TODO: Should this be "_current + 1"?
+      size_t oldactive = _active;   // Keep this for stats
+      _current_no_add  = _current;  // Start packing from _current
+      // TODO(JDM): Should this be "_current + 1"?
 
       do {
         // Apply every relation to the "_current_no_add" coset
         for (relation_t const& rel : _relations) {
-          trace(_current_no_add, rel, false); // Don't allow new cosets
+          trace(_current_no_add, rel, false);  // Don't allow new cosets
         }
         _current_no_add = _forwd[_current_no_add];
 
@@ -564,7 +554,7 @@ void Congruence::todd_coxeter(size_t limit) {
                                       << oldactive - _active << " killed"
                                       << std::endl;
       _reporter.unlock();
-      _pack += _pack / 10; // Raise packing threshold 10%
+      _pack += _pack / 10;  // Raise packing threshold 10%
       _stop_packing   = false;
       _current_no_add = UNDEFINED;
     }
@@ -678,7 +668,6 @@ void Congruence::compress() {
 
 Congruence*
 parallel_todd_coxeter(Congruence* cong_t, Congruence* cong_f, bool report) {
-
   Reporter reporter;
   reporter.report(report);
   reporter.start_timer();
@@ -717,7 +706,6 @@ Congruence* cong_pairs_enumerate(std::string                    type,
                                  Semigroup*                     S,
                                  std::vector<relation_t> const& extra,
                                  bool                           report) {
-
   return parallel_todd_coxeter(new Congruence(type, S, extra, true, 1),
                                new Congruence(type, S, extra, false, 2),
                                report);
