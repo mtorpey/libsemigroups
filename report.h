@@ -103,15 +103,19 @@ class Reporter {
   }
 
   void start_timer() {
-    _mtx.lock();
-    _timer.start();
-    _mtx.unlock();
+    if (_report) {
+      _mtx.lock();
+      _timer.start();
+      _mtx.unlock();
+    }
   }
 
   void stop_timer(std::string prefix = "elapsed time = ") {
-    _mtx.lock();
-    (*this)(_func) << prefix << _timer.string() << std::endl;
-    _mtx.unlock();
+    if (_report) {
+      _mtx.lock();
+      (*this)(_func) << prefix << _timer.string() << std::endl;
+      _mtx.unlock();
+    }
   }
 
   void set_level(size_t level) {
