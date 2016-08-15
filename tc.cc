@@ -701,12 +701,3 @@ parallel_todd_coxeter(Congruence* cong_t, Congruence* cong_f, bool report) {
     return cong_f;
   }
 }
-
-Congruence* cong_pairs_enumerate(std::string                    type,
-                                 Semigroup*                     S,
-                                 std::vector<relation_t> const& extra,
-                                 bool                           report) {
-  return parallel_todd_coxeter(new Congruence(type, S, extra, true, 1),
-                               new Congruence(type, S, extra, false, 2),
-                               report);
-}
