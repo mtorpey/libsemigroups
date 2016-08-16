@@ -36,10 +36,17 @@ class Timer {
   // Default constructor
   Timer() : _start(), _running(false) {}
 
+  // Is the timer running?
+  //
+  // This method can be used to check if the timer is running.
+  bool is_running() const {
+    return _running;
+  }
+
   // Start the timer
   //
   // This starts the timer running if it is not already running. If it is
-  // already running, then we **assert(false)**.
+  // already running, then it is reset.
   void start() {
     _running = true;
     _start   = std::chrono::steady_clock::now();
@@ -48,20 +55,17 @@ class Timer {
   // Stop the timer
   // @str prepend this to the printed statement (defaults to "")
   //
-  // Stops the timer regardless of its state, and calls <print> with the
-  // argument **str**.
-  void stop(std::string str = "") {
-    print(str);
+  // Stops the timer regardless of its state..
+  void stop() {
     _running = false;
   }
 
   // Print elapsed time
   // @str prepend this to the printed statement (defaults to "")
   //
-  // If the timer is running, then this prints the time elapsed since
-  // <start> was called. The format of the returned value is
-  // "Elapsed time = " followed by the time in some (hopefully) human
-  // readable format.
+  // If the timer is running, then this prints the time elapsed since <start>
+  // was called. The format of the returned value is the time in some
+  // (hopefully) human readable format.
 
   void print(std::string prefix = "") {
     if (_running) {

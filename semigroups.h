@@ -550,10 +550,11 @@ class Semigroup {
   size_t nr_idempotents(bool report) {
     if (_nr_idempotents == 0) {
       enumerate(-1, report);
-      Timer timer;
-      if (report) {
-        timer.start();
-      }
+
+      _reporter.report(report);
+      _reporter.start_timer();
+      _reporter(__func__);
+
       size_t sum_word_lengths = 0;
       for (size_t i = 1; i < _lenindex.size(); i++) {
         sum_word_lengths += i * (_lenindex.at(i) - _lenindex.at(i - 1));
@@ -574,9 +575,7 @@ class Semigroup {
           }
         }
       }
-      if (report) {
-        timer.stop();
-      }
+      _reporter.stop_timer();
     }
     return _nr_idempotents;
   }
@@ -953,6 +952,7 @@ class Semigroup {
         _reporter.stop_timer();
       }
     }
+    _reporter.stop_timer();
   }
 
   /*******************************************************************************
@@ -970,15 +970,14 @@ class Semigroup {
   *******************************************************************************/
 
   void add_generators(const std::unordered_set<Element*>& coll, bool report) {
-    if (report) {
-      std::cout << "semigroups++: add_generators" << std::endl;
-    }
-
     if (coll.empty()) {
       return;
     }
 
     assert(degree() == (*coll.begin())->degree());
+
+    _reporter.report(report);
+    _reporter.start_timer();
 
     // get some parameters from the old semigroup
     size_t old_nrgens  = _nrgens;
@@ -1024,6 +1023,7 @@ class Semigroup {
 
     if (!there_are_new_gens) { // everything in coll was already in the
                                // semigroup
+      _reporter.start_timer();
       return;
     }
 
@@ -1117,30 +1117,21 @@ class Semigroup {
         _lenindex.push_back(_index.size());
         _wordlen++;
       }
-      if (report) {
-        std::cout << "found " << _index.size() << " elements, ";
-        std::cout << _nrrules << " rules, ";
-        std::cout << "max word length " << current_max_word_length();
-        if (!is_done()) {
-          std::cout << ", so far" << std::endl;
-        } else {
-          std::cout << ", finished!" << std::endl;
-        }
+      _reporter(__func__) << "found " << _nr << " elements, " << _nrrules
+                          << " rules, max word length "
+                          << current_max_word_length();
+
+      if (!is_done()) {
+        _reporter << ", so far" << std::endl;
+      } else {
+        _reporter << ", finished!" << std::endl;
+        _reporter.stop_timer();
       }
     }
+    _reporter.stop_timer();
   }
 
-  /*********************************************************************************
-  **********************************************************************************
-   * Private methods
-  **********************************************************************************
-  *********************************************************************************/
-
  private:
-  /*******************************************************************************
-   *
-  *******************************************************************************/
-
   void inline expand(size_t nr) {
     _left->add_rows(nr);
     _reduced.add_rows(nr);
@@ -1148,20 +1139,12 @@ class Semigroup {
     _multiplied.resize(_multiplied.size() + nr, false);
   }
 
-  /*******************************************************************************
-   *
-  *******************************************************************************/
-
   void inline is_one(Element const* x, size_t element_nr) {
     if (!_found_one && *x == *_id) {
       _pos_one   = element_nr;
       _found_one = true;
     }
   }
-
-  /*******************************************************************************
-   *
-  *******************************************************************************/
 
   void inline closure_update(size_t             i,
                              size_t             j,
@@ -1222,12 +1205,6 @@ class Semigroup {
       }
     }
   }
-
-  /*********************************************************************************
-  **********************************************************************************
-   * Private data
-  **********************************************************************************
-  *********************************************************************************/
 
   size_t _batch_size;
   size_t _degree;
