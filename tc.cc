@@ -344,7 +344,7 @@ void Congruence::identify_cosets(coset_t lhs, coset_t rhs) {
       _next = rhs;
 
       // Leave a "forwarding address" so we know what <rhs> was identified with
-      _bckwd[rhs] = -lhs;
+      _bckwd[rhs] = -static_cast<signed_coset_t>(lhs);
 
       for (letter_t i = 0; i < _nrgens; i++) {
         // Let <v> be the first PREIMAGE of <rhs>
