@@ -138,11 +138,13 @@ Congruence::Congruence(std::string                    type,
                        Semigroup*                     semigroup,
                        std::vector<relation_t> const& extra,
                        bool                           prefill,
+                       bool                           report,
                        size_t                         thread_id)
     : Congruence(type_from_string(type),
                  semigroup,
                  extra,
                  prefill,
+                 report,
                  thread_id) {}
 
 Congruence::Congruence(cong_t                         type,

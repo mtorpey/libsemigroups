@@ -48,6 +48,7 @@ class Congruence {
              Semigroup*                     semigroup,
              std::vector<relation_t> const& extra,
              bool                           prefill,
+             bool                           report,
              size_t                         thread_id = 0);
 
   Congruence(std::string                    type,
