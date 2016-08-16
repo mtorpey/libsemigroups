@@ -755,7 +755,7 @@ class Semigroup {
    * in the special case of duplicate generators.
   *******************************************************************************/
 
-  void next_relation(std::vector<size_t>& relation, bool report) {
+  void next_relation(std::vector<size_t>& relation, bool report = true) {
     if (!is_done()) {
       enumerate(-1, report);
     }
@@ -1248,6 +1248,7 @@ class Semigroup {
   size_t               _wordlen;
 
   Reporter _reporter;
+
 };
 
 #endif  // SEMIGROUPSPLUSPLUS_SEMIGROUPS_H_
