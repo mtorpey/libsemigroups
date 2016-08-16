@@ -59,24 +59,23 @@ class Congruence {
 
   ~Congruence() {}
 
-  void todd_coxeter(size_t limit = INFTY);
-
-  size_t nr_active_cosets() {
-    return _active;
+  bool is_tc_done() const {
+    return _tc_done;
   }
 
-  coset_t word_to_coset(word_t);
+  void todd_coxeter(bool report = true);
+  coset_t word_to_coset(word_t w, bool report = true);
+  void compress(bool report = true);
 
-  void terminate();
-  bool is_tc_done();
-  void set_report(bool val);
-  void compress();
-
-  size_t nr_classes() {
+  size_t nr_classes(bool report = true) {
     if (!is_tc_done()) {
-      todd_coxeter();
+      todd_coxeter(report);
     }
     return _active - 1;
+  }
+
+  void kill() {
+    _killed = true;
   }
 
  private:
@@ -90,6 +89,7 @@ class Congruence {
              Semigroup*                     semigroup,
              std::vector<relation_t> const& extra,
              bool                           prefill,
+             bool                           report,
              size_t                         thread_id = 0);
 
   Congruence(cong_t                         type,
@@ -122,7 +122,7 @@ class Congruence {
   size_t _pack;  // Nr of active cosets allowed before a
                  // packing phase starts
 
-  std::atomic<bool> _stop;
+  std::atomic<bool> _killed;
 
   //
   // COSET LISTS:
@@ -179,9 +179,8 @@ class Congruence {
   std::stack<coset_t> _rhs_stack;
 
   // Statistics etc.
-  bool   _report;
   size_t _defined;
-  size_t _killed;
+  size_t _cosets_killed;
   size_t _stop_packing;  // TODO(JDM): make this a bool?
   size_t _next_report;
 
@@ -197,6 +196,6 @@ class Congruence {
 
 Congruence* parallel_todd_coxeter(Congruence* cong_t,
                                   Congruence* cong_f,
-                                  bool        report = false);
+                                  bool        report = true);
 
 #endif  // SEMIGROUPSPLUSPLUS_TC_H_

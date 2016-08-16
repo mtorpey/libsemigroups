@@ -61,7 +61,7 @@ Congruence::Congruence(cong_t type,
       _relations(relations),
       _active(1),
       _pack(120000),
-      _stop(false),
+      _killed(false),
       _forwd(1, UNDEFINED),
       _bckwd(1, 0),
       _current(0),
@@ -71,9 +71,8 @@ Congruence::Congruence(cong_t type,
       _table(_nrgens, 1, UNDEFINED),
       _preim_init(_nrgens, 1, UNDEFINED),
       _preim_next(_nrgens, 1, UNDEFINED),
-      _report(true),
       _defined(1),
-      _killed(0),
+      _cosets_killed(0),
       _stop_packing(false),
       _next_report(0),
       _thread_id(thread_id) {
@@ -150,6 +149,7 @@ Congruence::Congruence(cong_t                         type,
                        Semigroup*                     semigroup,
                        std::vector<relation_t> const& extra,
                        bool                           prefill,
+                       bool                           report,
                        size_t                         thread_id)
     : Congruence(type,
                  semigroup->nrgens(),
@@ -158,9 +158,9 @@ Congruence::Congruence(cong_t                         type,
                  thread_id) {
   if (prefill) {  // use the right or left Cayley table of semigroup
     if (type == LEFT) {
-      _table.append(*semigroup->left_cayley_graph(_report));
+      _table.append(*semigroup->left_cayley_graph(report));
     } else {
-      _table.append(*semigroup->right_cayley_graph(_report));
+      _table.append(*semigroup->right_cayley_graph(report));
     }
 
     for (auto it = _table.begin(); it < _table.end(); it++) {
@@ -176,11 +176,16 @@ Congruence::Congruence(cong_t                         type,
     std::vector<size_t> relation;
 
     semigroup->reset_next_relation();
-    semigroup->next_relation(relation, _report);
+    semigroup->next_relation(relation, report);
 
-    if (relation.size() == 2) {
+    while (relation.size() == 2 && !relation.empty()) {
       // This is for the case when there are duplicate gens
-      assert(false);  // FIXME
+      word_t lhs = {relation[0]};
+      word_t rhs = {relation[1]};
+      _relations.push_back(std::make_pair(lhs, rhs));
+      semigroup->next_relation(relation, report);
+      // We could remove the duplicate generators, and update any relation that
+      // contains a removed generator but this would be more complicated
     }
     if (_type == LEFT) {
       while (!relation.empty()) {  // TODO(JDM) improve this
@@ -190,7 +195,7 @@ Congruence::Congruence(cong_t                         type,
         word_t rhs = *(semigroup->factorisation(relation[2]));
         std::reverse(rhs.begin(), rhs.end());
         _relations.push_back(std::make_pair(lhs, rhs));
-        semigroup->next_relation(relation, _report);
+        semigroup->next_relation(relation, report);
       }
     } else {
       while (!relation.empty()) {
@@ -198,7 +203,7 @@ Congruence::Congruence(cong_t                         type,
         lhs.push_back(relation[1]);
         word_t rhs = *(semigroup->factorisation(relation[2]));
         _relations.push_back(std::make_pair(lhs, rhs));
-        semigroup->next_relation(relation, _report);
+        semigroup->next_relation(relation, report);
       }
     }
   }
@@ -239,7 +244,7 @@ void Congruence::init_after_prefill() {
 // Create a new active coset for coset c to map to under generator a
 //
 void Congruence::new_coset(coset_t const& c, letter_t const& a) {
-  if (_stop) {
+  if (_killed) {
     return;
   }
   _active++;
@@ -282,7 +287,7 @@ void Congruence::new_coset(coset_t const& c, letter_t const& a) {
 // Identify lhs with rhs, and process any further coincidences
 //
 void Congruence::identify_cosets(coset_t lhs, coset_t rhs) {
-  if (_stop) {
+  if (_killed) {
     return;
   }
 
@@ -297,7 +302,7 @@ void Congruence::identify_cosets(coset_t lhs, coset_t rhs) {
     rhs         = tmp;
   }
 
-  while (!_stop) {
+  while (!_killed) {
     // If <lhs> is not active, use the coset it was identified with
     while (_bckwd[lhs] < 0) {
       lhs = -_bckwd[lhs];
@@ -398,7 +403,7 @@ void Congruence::identify_cosets(coset_t lhs, coset_t rhs) {
 // function will not create any new cosets.
 //
 void Congruence::trace(coset_t const& c, relation_t const& rel, bool add) {
-  if (_stop) {
+  if (_killed) {
     return;
   }
 
@@ -425,7 +430,7 @@ void Congruence::trace(coset_t const& c, relation_t const& rel, bool add) {
     } else {
       return;
     }
-    if (_stop) {
+    if (_killed) {
       return;
     }
   }
@@ -437,18 +442,18 @@ void Congruence::trace(coset_t const& c, relation_t const& rel, bool add) {
     _reporter.lock();
     _reporter(__func__, _thread_id)
         << _defined << " defined, " << _forwd.size() << " max, " << _active
-        << " active, " << (_defined - _active) - _killed << " killed, "
+        << " active, " << (_defined - _active) - _cosets_killed << " killed, "
         << "current " << (add ? _current : _current_no_add) << std::endl;
     _reporter.unlock();
     // If we are killing cosets too slowly, then stop packing
-    if ((_defined - _active) - _killed < 100) {
+    if ((_defined - _active) - _cosets_killed < 100) {
       _stop_packing = true;
     }
-    _next_report = 0;
-    _killed      = _defined - _active;
+    _next_report  = 0;
+    _cosets_killed = _defined - _active;
   }
 
-  if (_stop) {
+  if (_killed) {
     return;
   }
   letter_t a = rel.first.back();
@@ -490,13 +495,11 @@ void Congruence::trace(coset_t const& c, relation_t const& rel, bool add) {
   }
 }
 
-//
-// todd_coxeter( limit )
 // Apply the TC algorithm until the coset table is complete.
-// TODO(JDM): <limit> should be the max table size; it is currently ignored.
-//
-void Congruence::todd_coxeter(size_t limit) {
-  _reporter.report(_report);
+
+void Congruence::todd_coxeter(bool report) {
+
+  _reporter.report(report);
   _reporter.set_class_name(*this);
 
   // If we have already run this before, then we are done
@@ -507,7 +510,7 @@ void Congruence::todd_coxeter(size_t limit) {
   // Apply each "extra" relation to the first coset only
   for (relation_t const& rel : _extra) {
     trace(_id_coset, rel);  // Allow new cosets
-    if (_stop) {
+    if (_killed) {
       return;
     }
   }
@@ -526,12 +529,12 @@ void Congruence::todd_coxeter(size_t limit) {
       _reporter.lock();
       _reporter(__func__, _thread_id)
           << _defined << " defined, " << _forwd.size() << " max, " << _active
-          << " active, " << (_defined - _active) - _killed << " killed, "
+          << " active, " << (_defined - _active) - _cosets_killed << " killed, "
           << "current " << _current << std::endl;
       _reporter(__func__, _thread_id) << "Entering lookahead phase . . ."
                                       << std::endl;
       _reporter.unlock();
-      _killed = _defined - _active;
+      _cosets_killed = _defined - _active;
 
       size_t oldactive = _active;   // Keep this for stats
       _current_no_add  = _current;  // Start packing from _current
@@ -545,7 +548,7 @@ void Congruence::todd_coxeter(size_t limit) {
         _current_no_add = _forwd[_current_no_add];
 
         // Quit loop if we reach an inactive coset OR we get a "stop" signal
-        if (_stop) {
+        if (_killed) {
           return;
         }
       } while (_current_no_add != _next && !_stop_packing);
@@ -563,7 +566,7 @@ void Congruence::todd_coxeter(size_t limit) {
     _current = _forwd[_current];
 
     // Quit loop when we reach an inactive coset
-    if (_stop) {
+    if (_killed) {
       return;
     }
   } while (_current != _next);
@@ -581,9 +584,9 @@ void Congruence::todd_coxeter(size_t limit) {
 
 // Return the coset which corresponds to the word <w>.
 
-size_t Congruence::word_to_coset(word_t w) {
+size_t Congruence::word_to_coset(word_t w, bool report) {
   if (!_tc_done) {
-    todd_coxeter();
+    todd_coxeter(report);
   }
   coset_t c = _id_coset;
   if (_type == LEFT) {
@@ -602,25 +605,14 @@ size_t Congruence::word_to_coset(word_t w) {
   return c;
 }
 
-void Congruence::terminate() {
-  _stop = true;
-}
-
-void Congruence::set_report(bool val) {
-  _report = val;
-}
-
-bool Congruence::is_tc_done() {
-  return _tc_done;
-}
 
 // compress the table
 
-void Congruence::compress() {
+void Congruence::compress(bool report) {
   if (_is_compressed) {
     return;
   } else if (!is_tc_done()) {
-    todd_coxeter();
+    todd_coxeter(report);
   }
   _is_compressed = true;
   if (_active == _table.nr_rows()) {
@@ -672,12 +664,9 @@ parallel_todd_coxeter(Congruence* cong_t, Congruence* cong_f, bool report) {
   reporter.report(report);
   reporter.start_timer();
 
-  cong_t->set_report(report);
-  cong_f->set_report(report);
-
-  auto go = [](Congruence& this_cong, Congruence& that_cong) {
-    this_cong.todd_coxeter();
-    that_cong.terminate();
+  auto go = [report](Congruence& this_cong, Congruence& that_cong) {
+    this_cong.todd_coxeter(report);
+    that_cong.kill();
   };
 
   std::thread thread_t(go, std::ref(*cong_t), std::ref(*cong_f));
