@@ -187,21 +187,26 @@ Congruence::Congruence(cong_t                         type,
       // We could remove the duplicate generators, and update any relation that
       // contains a removed generator but this would be more complicated
     }
+    word_t lhs, rhs;  // changed in-place by factorisation
     if (_type == LEFT) {
       while (!relation.empty()) {  // TODO(JDM) improve this
-        word_t lhs = *(semigroup->factorisation(relation[0]));
+        semigroup->factorisation(lhs, relation[0]);
         lhs.push_back(relation[1]);
         std::reverse(lhs.begin(), lhs.end());
-        word_t rhs = *(semigroup->factorisation(relation[2]));
+
+        semigroup->factorisation(rhs, relation[2]);
         std::reverse(rhs.begin(), rhs.end());
+
         _relations.push_back(std::make_pair(lhs, rhs));
         semigroup->next_relation(relation, report);
       }
     } else {
       while (!relation.empty()) {
-        word_t lhs = *(semigroup->factorisation(relation[0]));
+        semigroup->factorisation(lhs, relation[0]);
         lhs.push_back(relation[1]);
-        word_t rhs = *(semigroup->factorisation(relation[2]));
+
+        semigroup->factorisation(rhs, relation[2]);
+
         _relations.push_back(std::make_pair(lhs, rhs));
         semigroup->next_relation(relation, report);
       }
@@ -316,7 +321,6 @@ void Congruence::identify_cosets(coset_t lhs, coset_t rhs) {
       _active--;
       // If any "controls" point to <rhs>, move them back one in the list
       if (rhs == _current) {
-        // TODO(JDM) should we go forwd instead?
         _current = _bckwd[_current];
       }
       if (rhs == _current_no_add) {
@@ -379,7 +383,6 @@ void Congruence::identify_cosets(coset_t lhs, coset_t rhs) {
             // Add (u,v) to the stack of pairs to be identified
             _lhs_stack.push(std::min(u, v));
             _rhs_stack.push(std::max(u, v));
-            // TODO(JDM) Is the min/max thing necessary?
           }
         }
       }
@@ -536,9 +539,8 @@ void Congruence::todd_coxeter(bool report) {
       _reporter.unlock();
       _cosets_killed = _defined - _active;
 
-      size_t oldactive = _active;   // Keep this for stats
-      _current_no_add  = _current;  // Start packing from _current
-      // TODO(JDM): Should this be "_current + 1"?
+      size_t oldactive = _active;       // Keep this for stats
+      _current_no_add  = _current + 1;  // Start packing from _current
 
       do {
         // Apply every relation to the "_current_no_add" coset

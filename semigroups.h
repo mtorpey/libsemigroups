@@ -40,8 +40,13 @@ typedef std::vector<letter_t> word_t;
 typedef std::pair<word_t, word_t> relation_t;
 typedef RecVec<size_t> cayley_graph_t;
 
+//
+// Class for representing a semigroup consisting of <Element>s.
+
 class Semigroup {
   typedef RecVec<bool> Flags;
+  typedef size_t index_t;
+  typedef size_t pos_t;
 
   struct Less {
     explicit Less(Semigroup const& semigroup) : _semigroup(semigroup) {}
@@ -711,23 +716,27 @@ class Semigroup {
     return _left;
   }
 
-  /*******************************************************************************
-   * factorization: returns the minimum word equal to _elements.at(pos).
-  *******************************************************************************/
+  // x
+  // @word   changed in-place to contain a word in the generators equal to the
+  // **pos** element of the semigroup
+  // @pos    the position of the element to factorise
+  // @report report during enumeration, if any (defaults to true)
+  //
+  // If **pos** is less than the size of this semigroup, then this method
+  // changes its first argument **word** in-place (first clearing it and then)
+  // to contain a minimal factorization of the element in position **pos** of
+  // **this** with respect to the generators of **this**.  The method
+  // enumerates the semigroup at least until the **pos** element is known. If
+  // **pos** is greater than the size of the semigroup, then nothing happens
+  // and **word** is not modified, in particular not cleared.
 
-  word_t* factorisation(size_t pos, bool report = true) {
-    word_t* word(new word_t());
-    factorisation(*word, pos, report);
-    return word;
-    // FIXME who deletes this???
-  }
-
-  void factorisation(word_t& word, size_t pos, bool report = true) {
+  void factorisation(word_t& word, pos_t pos, bool report = true) {
     if (pos > _nr && !is_done()) {
       enumerate(pos, report);
     }
 
     if (pos < _nr) {
+      word.clear();
       while (pos != (size_t) -1) {
         word.push_back(_first.at(pos));
         pos = _suffix.at(pos);
