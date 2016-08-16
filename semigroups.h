@@ -114,14 +114,21 @@ class Semigroup {
     _lenindex.push_back(0);
     _id = _gens->at(0)->identity();
 
+    // inverse of genslookup for keeping track of duplicate gens
+    // maps from positions in _elements to positions in _gens
+    std::vector<letter_t> inv_genslookup;
+
     // add the generators
     for (size_t i = 0; i < _nrgens; i++) {
       auto it = _map.find(_gens->at(i));
       if (it != _map.end()) {  // duplicate generator
         _genslookup.push_back(it->second);
         _nrrules++;
-        _duplicate_gens.push_back(std::make_pair(i, it->second));
+        _duplicate_gens.push_back(
+            std::make_pair(i, inv_genslookup[it->second]));
+        // i.e. _gens[i] = _gens[inv_genslookup[it->second]]
       } else {
+        inv_genslookup.push_back(_genslookup.size());
         is_one(_gens->at(i), _nr);
         _elements->push_back(_gens->at(i)->really_copy());
         _first.push_back(i);
