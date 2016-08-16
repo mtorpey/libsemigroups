@@ -503,7 +503,6 @@ void Congruence::trace(coset_t const& c, relation_t const& rel, bool add) {
 // Apply the TC algorithm until the coset table is complete.
 
 void Congruence::todd_coxeter(bool report) {
-
   _reporter.report(report);
   _reporter.set_class_name(*this);
 

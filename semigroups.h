@@ -1241,7 +1241,6 @@ class Semigroup {
   size_t               _wordlen;
 
   Reporter _reporter;
-
 };
 
 #endif  // SEMIGROUPSPLUSPLUS_SEMIGROUPS_H_
