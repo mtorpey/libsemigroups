@@ -259,6 +259,9 @@ size_t Bipartition::rank() {
 }
 
 Blocks* Bipartition::left_blocks() {
+  if (degree() == 0) {
+    return new Blocks();
+  }
   init_trans_blocks_lookup();
   return new Blocks(
       new std::vector<u_int32_t>(_vector->begin(),
@@ -267,6 +270,10 @@ Blocks* Bipartition::left_blocks() {
 }
 
 Blocks* Bipartition::right_blocks() {
+  if (degree() == 0) {
+    return new Blocks();
+  }
+
   std::vector<u_int32_t>* blocks        = new std::vector<u_int32_t>();
   std::vector<bool>*      blocks_lookup = new std::vector<bool>();
 

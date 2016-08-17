@@ -42,8 +42,8 @@ class Blocks {
 
   Blocks(std::vector<u_int32_t>* blocks, std::vector<bool>* lookup)
       : _blocks(blocks), _lookup(lookup), _nr_blocks(), _rank(UNDEFINED) {
-    _nr_blocks = *(std::max_element(_blocks->begin(), _blocks->end())) + 1;
     assert(_blocks->size() != 0);
+    _nr_blocks = *(std::max_element(_blocks->begin(), _blocks->end())) + 1;
     assert(_nr_blocks == _lookup->size());
   }
 
@@ -82,6 +82,8 @@ class Blocks {
   bool operator==(const Blocks& that) const {
     if (this->_nr_blocks != that._nr_blocks) {
       return false;
+    } else if (this->_nr_blocks == 0) {
+      return true;
     }
     return (*(this->_blocks) == *(that._blocks)
             && *(this->_lookup) == *(that._lookup));
