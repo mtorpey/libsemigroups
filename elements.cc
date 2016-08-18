@@ -91,11 +91,11 @@ u_int32_t Bipartition::block(size_t pos) const {
 }
 
 size_t Bipartition::complexity() const {
-  return pow(_vector->size(), 2);
+  return (_vector->empty() ? 0 : pow(_vector->size(), 2));
 }
 
 size_t Bipartition::degree() const {
-  return _vector->size() / 2;
+  return (_vector->empty() ? 0 : _vector->size() / 2);
 }
 
 size_t Bipartition::hash_value() const {
@@ -188,15 +188,11 @@ inline u_int32_t Bipartition::fuseit(u_int32_t pos) {
 u_int32_t Bipartition::const_nr_blocks() const {
   if (_nr_blocks != Bipartition::UNDEFINED) {
     return _nr_blocks;
+  } else if (degree() == 0) {
+    return 0;
   }
-  size_t nr = 0;
-  for (auto x : *_vector) {
-    if (x > nr) {
-      nr = x;
-    }
-  }
-  assert(nr != Bipartition::UNDEFINED);
-  return nr + 1;
+
+  return *std::max_element(_vector->begin(), _vector->end()) + 1;
 }
 
 u_int32_t Bipartition::nr_blocks() {
@@ -208,10 +204,14 @@ u_int32_t Bipartition::nr_blocks() {
 
 u_int32_t Bipartition::nr_left_blocks() {
   if (_nr_left_blocks == Bipartition::UNDEFINED) {
-    _nr_left_blocks =
-        *std::max_element(_vector->begin(),
-                          _vector->begin() + (_vector->size() / 2))
-        + 1;
+    if (degree() == 0) {
+      _nr_left_blocks = 0;
+    } else {
+      _nr_left_blocks =
+          *std::max_element(_vector->begin(),
+                            _vector->begin() + (_vector->size() / 2))
+          + 1;
+    }
   }
   return _nr_left_blocks;
 }
@@ -235,7 +235,7 @@ bool Bipartition::is_transverse_block(size_t index) {
 }
 
 void Bipartition::init_trans_blocks_lookup() {
-  if (_trans_blocks_lookup.empty()) {
+  if (_trans_blocks_lookup.empty() && degree() > 0) {
     _trans_blocks_lookup.resize(this->nr_left_blocks());
     for (auto it = _vector->begin() + degree(); it < _vector->end(); it++) {
       if ((*it) < this->nr_left_blocks()) {
