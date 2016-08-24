@@ -412,10 +412,11 @@ size_t PBR::degree() const {
 
 size_t PBR::hash_value() const {
   size_t seed = 0;
-  size_t pow  = 101;
-  for (size_t i = 0; i < this->degree(); i++) {
-    for (size_t j = 0; j < this->at(i).size(); j++) {
-      seed = (seed * pow) + this->at(i).at(j);
+  size_t const pow  = 101;
+  for (auto row : *this->_vector) {
+    for (auto val : row) {
+      seed *= pow;
+      seed += val;
     }
   }
   return seed;
