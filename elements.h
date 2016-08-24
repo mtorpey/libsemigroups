@@ -32,6 +32,7 @@
 
 #include "blocks.h"
 #include "semiring.h"
+#include "recvec.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -491,22 +492,18 @@ class PBR : public ElementWithVectorData<std::vector<u_int32_t>, PBR> {
   void     redefine(Element const*, Element const*) override;
 
  private:
-  void add_adjacency(size_t vertex1, size_t vertex2);
+  void unite_rows(size_t vertex1, size_t vertex2);
 
-  void x_dfs(u_int32_t          n,
-             u_int32_t          i,
-             u_int32_t          v,
-             PBR const*         x,
-             PBR const*         y);
+  void
+  x_dfs(u_int32_t n, u_int32_t i, PBR const* x, PBR const* y, size_t const adj);
 
-  void y_dfs(u_int32_t          n,
-             u_int32_t          i,
-             u_int32_t          v,
-             PBR const*         x,
-             PBR const*         y);
+  void
+  y_dfs(u_int32_t n, u_int32_t i, PBR const* x, PBR const* y, size_t const adj);
 
   static std::vector<bool> x_seen;
   static std::vector<bool> y_seen;
+  static RecVec<bool>      out;
+  static RecVec<bool>      tmp;
 };
 
 #endif  // SEMIGROUPSPLUSPLUS_ELEMENTS_H_

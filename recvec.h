@@ -31,6 +31,7 @@
 
 template <typename T> class RecVec {
  public:
+
   // Default constructor
   // @nr_cols the number of columns in the <RecVec> being constructed
   // @nr_rows the number of rows (defaults to 0) in the <RecVec> being
@@ -40,7 +41,7 @@ template <typename T> class RecVec {
   // Constructs a <RecVec> with the specified number of columns and rows and
   // initialises every position with the default value.
 
-  explicit RecVec(size_t nr_cols, size_t nr_rows = 0, T default_val = 0)
+  explicit RecVec(size_t nr_cols = 0, size_t nr_rows = 0, T default_val = 0)
       : _vec(),
         _nr_used_cols(nr_cols),
         _nr_unused_cols(0),
@@ -100,8 +101,10 @@ template <typename T> class RecVec {
 
   void inline add_rows(size_t nr = 1) {
     _nr_rows += nr;
-    _vec.resize(_vec.size() + (_nr_used_cols + _nr_unused_cols) * nr,
-                _default_val);
+    if (nr != 0) {
+      _vec.resize(_vec.size() + (_nr_used_cols + _nr_unused_cols) * nr,
+                  _default_val);
+    }
   }
 
   // Add columns
@@ -124,18 +127,19 @@ template <typename T> class RecVec {
 
     size_t old_nr_cols = _nr_used_cols + _nr_unused_cols;
     size_t new_nr_cols = std::max(5 * old_nr_cols / 4 + 4, nr + old_nr_cols);
+    if (_nr_rows != 0) {
+      _vec.resize(new_nr_cols * _nr_rows, _default_val);
 
-    _vec.resize(new_nr_cols * _nr_rows, _default_val);
+      typename std::vector<T>::iterator old_it(
+          _vec.begin() + (old_nr_cols * _nr_rows) - old_nr_cols);
+      typename std::vector<T>::iterator new_it(
+          _vec.begin() + (new_nr_cols * _nr_rows) - new_nr_cols);
 
-    typename std::vector<T>::iterator old_it(
-        _vec.begin() + (old_nr_cols * _nr_rows) - old_nr_cols);
-    typename std::vector<T>::iterator new_it(
-        _vec.begin() + (new_nr_cols * _nr_rows) - new_nr_cols);
-
-    while (old_it != _vec.begin()) {
-      std::move(old_it, old_it + _nr_used_cols, new_it);
-      old_it -= old_nr_cols;
-      new_it -= new_nr_cols;
+      while (old_it != _vec.begin()) {
+        std::move(old_it, old_it + _nr_used_cols, new_it);
+        old_it -= old_nr_cols;
+        new_it -= new_nr_cols;
+      }
     }
     _nr_used_cols += nr;
     _nr_unused_cols = new_nr_cols - _nr_used_cols;
@@ -225,6 +229,41 @@ template <typename T> class RecVec {
     }
   }
 
+  // Count
+  //
+  // @return the number of occurrences of **val** in the **i**th row.
+
+  size_t count(size_t i, T val) {
+    assert(i < _nr_rows);
+    return std::count(row_cbegin(i), row_cend(i), val);
+  }
+
+  // Count
+  //
+  // @return the number of occurrences of **val** in the **i**th row.
+
+  template<class UnaryPredicate>
+  size_t all_of(size_t i, UnaryPredicate pred) {
+    assert(i < _nr_rows);
+    return std::all_of(row_cbegin(i), row_cend(i), pred);
+  }
+
+  inline typename std::vector<T>::iterator row_begin(size_t i) {
+    return _vec.begin() + (_nr_used_cols + _nr_unused_cols) * i;
+  }
+
+  inline typename std::vector<T>::iterator row_end(size_t i) {
+    return row_begin(i) + _nr_used_cols;
+  }
+
+  inline typename std::vector<T>::const_iterator row_cbegin(size_t i) {
+    return _vec.begin() + (_nr_used_cols + _nr_unused_cols) * i;
+  }
+
+  inline typename std::vector<T>::const_iterator row_cend(size_t i) {
+    return row_begin(i) + _nr_used_cols;
+  }
+
   // Iterator
   //
   // @return an iterator pointing at the beginning of the <RecVec>.
@@ -234,6 +273,16 @@ template <typename T> class RecVec {
   }
 
   // Iterator
+  //
+  // @return an iterator pointing at the end of the <RecVec>.
+  void clear() {
+    _nr_unused_cols += _nr_used_cols;
+    _nr_used_cols = 0;
+    _nr_rows = 0;
+    _vec.clear();
+  }
+
+  // clear
   //
   // @return an iterator pointing at the end of the <RecVec>.
   inline typename std::vector<T>::iterator end() {

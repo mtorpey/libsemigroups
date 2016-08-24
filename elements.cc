@@ -399,6 +399,8 @@ void ProjectiveMaxPlusMatrix::after() {
 
 std::vector<bool> PBR::x_seen;
 std::vector<bool> PBR::y_seen;
+RecVec<bool>      PBR::out;
+RecVec<bool>      PBR::tmp;
 
 size_t PBR::complexity() const {
   return pow((2 * this->degree()), 3);
@@ -444,57 +446,92 @@ void PBR::redefine(Element const* xx, Element const* yy) {
   PBR const* x(static_cast<PBR const*>(xx));
   PBR const* y(static_cast<PBR const*>(yy));
 
-  u_int32_t n = this->degree();
-
-  for (size_t i = 0; i < 2 * n; i++) {
-    (*_vector)[i].clear();
-  }
+  u_int32_t const n = this->degree();
 
   x_seen.clear();
   x_seen.resize(2 * n, false);
   y_seen.clear();
   y_seen.resize(2 * n, false);
+  out.clear();
+  out.add_cols(2 * n);
+  out.add_rows(2 * n);
+  tmp.clear();
+  tmp.add_cols(2 * n + 1);
 
   for (size_t i = 0; i < n; i++) {
-    x_dfs(n, i, i, x, y);
-    for (size_t j = 0; j < 2 * n; j++) {
-      x_seen.at(j) = false;
-      y_seen.at(j) = false;
+    for (auto j : (*x)[i]) {
+      if (j < n) {
+        out.set(i, j, true);
+      } else if (j < tmp.nr_rows() && tmp.get(j, 0)) {
+        unite_rows(i, j);
+      } else {
+        if (j >= tmp.nr_rows()) {
+          tmp.add_rows(j - tmp.nr_rows() + 1);
+        }
+        tmp.set(j, 0, true);
+        x_seen[i] = true;
+        y_dfs(n, j - n, x, y, j);
+        unite_rows(i, j);
+        std::fill(x_seen.begin(), x_seen.end(), false);
+        std::fill(y_seen.begin(), y_seen.end(), false);
+      }
+      if (out.all_of(i, [](bool val) { return val; })) {
+        break;
+      }
     }
   }
 
   for (size_t i = n; i < 2 * n; i++) {
-    y_dfs(n, i, i, x, y);
+    for (auto j : (*y)[i]) {
+      if (j >= n) {
+        out.set(i, j, true);
+      } else if (j < tmp.nr_rows() && tmp.get(j, 0)) {
+        unite_rows(i, j);
+      } else {
+        if (j >= tmp.nr_rows()) {
+          tmp.add_rows(j - tmp.nr_rows() + 1);
+        }
+        tmp.set(j, 0, true);
+        y_seen[i] = true;
+        x_dfs(n, j + n, x, y, j);
+        unite_rows(i, j);
+        std::fill(x_seen.begin(), x_seen.end(), false);
+        std::fill(y_seen.begin(), y_seen.end(), false);
+      }
+      if (out.all_of(i, [](bool val) { return val; })) {
+        break;
+      }
+    }
+  }
+
+  for (size_t i = 0; i < 2 * n; i++) {
+    (*_vector)[i].clear();
     for (size_t j = 0; j < 2 * n; j++) {
-      x_seen.at(j) = false;
-      y_seen.at(j) = false;
+      if (out.get(i, j)) {
+        (*_vector)[i].push_back(j);
+      }
     }
   }
 }
 
-// add vertex2 to the adjacency of vertex1
-void PBR::add_adjacency(size_t vertex1, size_t vertex2) {
-  auto it = std::lower_bound(
-      _vector->at(vertex1).begin(), _vector->at(vertex1).end(), vertex2);
-  if (it == _vector->at(vertex1).end()) {
-    _vector->at(vertex1).push_back(vertex2);
-  } else if ((*it) != vertex2) {
-    _vector->at(vertex1).insert(it, vertex2);
+inline void PBR::unite_rows(size_t i, size_t j) {
+  for (size_t k = 0; k < out.nr_cols(); k++) {
+    out.set(i, k, (out.get(i, k) || tmp.get(j, k + 1)));
   }
 }
 
 void PBR::x_dfs(u_int32_t  n,
                 u_int32_t  i,
-                u_int32_t  v,  // the vertex we're currently doing
                 PBR const* x,
-                PBR const* y) {
-  if (!x_seen.at(i)) {
-    x_seen.at(i) = true;
-    for (auto j : x->at(i)) {
+                PBR const* y,
+                size_t     adj) {
+  if (!x_seen[i]) {
+    x_seen[i] = true;
+    for (auto j : (*x)[i]) {
       if (j < n) {
-        add_adjacency(v, j);
+        tmp.set(adj, j + 1, true);
       } else {
-        y_dfs(n, j - n, v, x, y);
+        y_dfs(n, j - n, x, y, adj);
       }
     }
   }
@@ -502,17 +539,16 @@ void PBR::x_dfs(u_int32_t  n,
 
 void PBR::y_dfs(u_int32_t  n,
                 u_int32_t  i,
-                u_int32_t  v,  // the vertex we're currently doing
-
                 PBR const* x,
-                PBR const* y) {
-  if (!y_seen.at(i)) {
-    y_seen.at(i) = true;
-    for (auto j : y->at(i)) {
+                PBR const* y,
+                size_t     adj) {
+  if (!y_seen[i]) {
+    y_seen[i] = true;
+    for (auto j : (*y)[i]) {
       if (j >= n) {
-        add_adjacency(v, j);
+        tmp.set(adj, j + 1, true);
       } else {
-        x_dfs(n, j + n, v, x, y);
+        x_dfs(n, j + n, x, y, adj);
       }
     }
   }
