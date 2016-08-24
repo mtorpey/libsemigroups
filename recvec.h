@@ -31,7 +31,6 @@
 
 template <typename T> class RecVec {
  public:
-
   // Default constructor
   // @nr_cols the number of columns in the <RecVec> being constructed
   // @nr_rows the number of rows (defaults to 0) in the <RecVec> being

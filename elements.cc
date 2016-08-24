@@ -437,9 +437,6 @@ Element* PBR::identity() const {
   return new PBR(adj);
 }
 
-// FIXME also we repeatedly search in the same part of the graph, and so
-// there is probably a lot of repeated work in the dfs. Better use some version
-// of Floyd-Warshall
 void PBR::redefine(Element const* xx, Element const* yy) {
   assert(xx->degree() == yy->degree());
   assert(xx->degree() == this->degree());
@@ -449,15 +446,22 @@ void PBR::redefine(Element const* xx, Element const* yy) {
 
   u_int32_t const n = this->degree();
 
-  x_seen.clear();
-  x_seen.resize(2 * n, false);
-  y_seen.clear();
-  y_seen.resize(2 * n, false);
-  out.clear();
-  out.add_cols(2 * n);
-  out.add_rows(2 * n);
-  tmp.clear();
-  tmp.add_cols(2 * n + 1);
+  if (x_seen.size() != 2 * n) {
+    x_seen.clear();
+    x_seen.resize(2 * n, false);
+    y_seen.clear();
+    y_seen.resize(2 * n, false);
+    out.clear();
+    out.add_cols(2 * n);
+    out.add_rows(2 * n);
+    tmp.clear();
+    tmp.add_cols(2 * n + 1);
+  } else {
+    std::fill(x_seen.begin(), x_seen.end(), false);
+    std::fill(y_seen.begin(), y_seen.end(), false);
+    std::fill(out.begin(), out.end(), false);
+    std::fill(tmp.begin(), tmp.end(), false);
+  }
 
   for (size_t i = 0; i < n; i++) {
     for (auto j : (*x)[i]) {
@@ -515,17 +519,17 @@ void PBR::redefine(Element const* xx, Element const* yy) {
   }
 }
 
-inline void PBR::unite_rows(size_t i, size_t j) {
+inline void PBR::unite_rows(size_t const& i, size_t const& j) {
   for (size_t k = 0; k < out.nr_cols(); k++) {
     out.set(i, k, (out.get(i, k) || tmp.get(j, k + 1)));
   }
 }
 
-void PBR::x_dfs(u_int32_t  n,
-                u_int32_t  i,
-                PBR const* x,
-                PBR const* y,
-                size_t     adj) {
+void PBR::x_dfs(u_int32_t const& n,
+                u_int32_t const& i,
+                PBR const* const x,
+                PBR const* const y,
+                size_t const&    adj) {
   if (!x_seen[i]) {
     x_seen[i] = true;
     for (auto j : (*x)[i]) {
@@ -538,11 +542,11 @@ void PBR::x_dfs(u_int32_t  n,
   }
 }
 
-void PBR::y_dfs(u_int32_t  n,
-                u_int32_t  i,
-                PBR const* x,
-                PBR const* y,
-                size_t     adj) {
+void PBR::y_dfs(u_int32_t const& n,
+                u_int32_t const& i,
+                PBR const* const x,
+                PBR const* const y,
+                size_t const&    adj) {
   if (!y_seen[i]) {
     y_seen[i] = true;
     for (auto j : (*y)[i]) {

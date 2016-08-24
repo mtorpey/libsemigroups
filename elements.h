@@ -492,13 +492,19 @@ class PBR : public ElementWithVectorData<std::vector<u_int32_t>, PBR> {
   void     redefine(Element const*, Element const*) override;
 
  private:
-  void unite_rows(size_t vertex1, size_t vertex2);
+  void unite_rows(size_t const& vertex1, size_t const& vertex2);
 
-  void
-  x_dfs(u_int32_t n, u_int32_t i, PBR const* x, PBR const* y, size_t const adj);
+  void x_dfs(u_int32_t const& n,
+             u_int32_t const& i,
+             PBR const* const x,
+             PBR const* const y,
+             size_t const&    adj);
 
-  void
-  y_dfs(u_int32_t n, u_int32_t i, PBR const* x, PBR const* y, size_t const adj);
+  void y_dfs(u_int32_t const& n,
+             u_int32_t const& i,
+             PBR const* const x,
+             PBR const* const y,
+             size_t const&    adj);
 
   static std::vector<bool> x_seen;
   static std::vector<bool> y_seen;
