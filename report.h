@@ -127,7 +127,7 @@ class Reporter {
   void stop_timer(std::string prefix = "elapsed time = ") {
     if (_report && _timer.is_running()) {
       _mtx.lock();
-      (*this)(_func) << prefix << _timer.string() << std::endl;
+      (*this)(_func, _thread_id) << prefix << _timer.string() << std::endl;
       _timer.stop();
       _mtx.unlock();
     }
