@@ -21,6 +21,7 @@
 // Static data members
 
 Semigroup::pos_t Semigroup::UNDEFINED = -1;
+Semigroup::pos_t Semigroup::LIMIT_MAX = -1;
 
 // default
 // @gens   the generators of the semigroup
@@ -50,7 +51,7 @@ Semigroup::Semigroup(std::vector<Element*>* gens)
       _prefix(),
       _reduced(gens->size()),
       _relation_gen(0),
-      _relation_pos(-1),
+      _relation_pos(UNDEFINED),
       _right(new cayley_graph_t(gens->size())),
       _sorted(nullptr),
       _pos_sorted(nullptr),
@@ -66,9 +67,9 @@ Semigroup::Semigroup(std::vector<Element*>* gens)
     _gens->push_back(x->really_copy());
   }
 
-  _tmp_product = _gens->at(0)->identity();
+  _tmp_product = (*_gens)[0]->identity();
   _lenindex.push_back(0);
-  _id = _gens->at(0)->identity();
+  _id = (*_gens)[0]->identity();
 
   // inverse of genslookup for keeping track of duplicate gens
   // maps from positions in _elements to positions in _gens
@@ -76,7 +77,7 @@ Semigroup::Semigroup(std::vector<Element*>* gens)
 
   // add the generators
   for (size_t i = 0; i < _nrgens; i++) {
-    auto it = _map.find(_gens->at(i));
+    auto it = _map.find((*_gens)[i]);
     if (it != _map.end()) {  // duplicate generator
       _genslookup.push_back(it->second);
       _nrrules++;
@@ -84,15 +85,15 @@ Semigroup::Semigroup(std::vector<Element*>* gens)
       // i.e. _gens[i] = _gens[inv_genslookup[it->second]]
     } else {
       inv_genslookup.push_back(_genslookup.size());
-      is_one(_gens->at(i), _nr);
-      _elements->push_back(_gens->at(i)->really_copy());
+      is_one((*_gens)[i], _nr);
+      _elements->push_back((*_gens)[i]->really_copy());
       _first.push_back(i);
       _final.push_back(i);
       _genslookup.push_back(_nr);
       _length.push_back(1);
       _map.insert(std::make_pair(_elements->back(), _nr));
-      _prefix.push_back(-1);
-      _suffix.push_back(-1);
+      _prefix.push_back(UNDEFINED);
+      _suffix.push_back(UNDEFINED);
       _index.push_back(_nr);
       _nr++;
     }
@@ -142,9 +143,11 @@ Semigroup::Semigroup(const Semigroup& copy)
     _gens->push_back(x->really_copy());
   }
 
-  for (size_t i = 0; i < copy._elements->size(); i++) {
-    _elements->push_back(copy._elements->at(i)->really_copy());
-    _map.insert(std::make_pair(_elements->back(), i));
+  size_t i = 0;
+  for (Element const* x : *(copy._elements)) {
+    Element* y = x->really_copy();
+    _elements->push_back(y);
+    _map.insert(std::make_pair(y, i++));
   }
 }
 
@@ -172,7 +175,7 @@ Semigroup::Semigroup(const Semigroup&       copy,
                                 // add_generators
       _reduced(copy._reduced),
       _relation_gen(0),
-      _relation_pos(-1),
+      _relation_pos(UNDEFINED),
       _right(new cayley_graph_t(*copy._right)),
       _sorted(nullptr),
       _pos_sorted(nullptr),
@@ -192,9 +195,13 @@ Semigroup::Semigroup(const Semigroup&       copy,
 
   std::unordered_set<Element*> new_gens;
 
+#ifndef NDEBUG
+  size_t deg = (*coll)[0]->degree();
+#endif
+
   // remove duplicate generators
-  for (Element* x : *coll) {
-    assert(x->degree() == coll->at(0)->degree());
+  for (Element const* x : *coll) {
+    assert(x->degree() == deg);
     new_gens.insert(x->really_copy());
     // copy here so that after add_generators, the semigroup is responsible
     // for the destruction of gens.
@@ -211,30 +218,32 @@ Semigroup::Semigroup(const Semigroup&       copy,
   }
 
   _lenindex.push_back(0);
-  _lenindex.push_back(copy._lenindex.at(1));
+  _lenindex.push_back(copy._lenindex[1]);
   _index.reserve(copy._nr);
 
   // add the distinct old generators to new _index
-  for (size_t i = 0; i < copy._lenindex.at(1); i++) {
-    _index.push_back(copy._index.at(i));
-    _final.at(_index.at(i))  = i;
-    _first.at(_index.at(i))  = i;
-    _prefix.at(_index.at(i)) = -1;
-    _suffix.at(_index.at(i)) = -1;
-    _length.at(_index.at(i)) = 1;
+  for (size_t i = 0; i < copy._lenindex[1]; i++) {
+    _index.push_back(copy._index[i]);
+    _final[_index[i]]  = i;
+    _first[_index[i]]  = i;
+    _prefix[_index[i]] = UNDEFINED;
+    _suffix[_index[i]] = UNDEFINED;
+    _length[_index[i]] = 1;
   }
 
-  for (size_t i = 0; i < copy.nrgens(); i++) {
-    _gens->push_back(copy._gens->at(i)->really_copy(deg_plus));
+  for (Element const* x : *copy._gens) {
+    _gens->push_back(x->really_copy(deg_plus));
   }
 
   _id          = copy._id->really_copy(deg_plus);
   _tmp_product = copy._id->really_copy(deg_plus);
 
-  for (size_t i = 0; i < copy._elements->size(); i++) {
-    _elements->push_back(copy._elements->at(i)->really_copy(deg_plus));
-    _map.insert(std::make_pair(_elements->back(), i));
-    is_one(_elements->back(), i);
+  size_t i = 0;
+  for (Element const* x : *(copy._elements)) {
+    Element* y = x->really_copy(deg_plus);
+    _elements->push_back(y);
+    _map.insert(std::make_pair(y, i));
+    is_one(_elements->back(), i++);
   }
 
   add_generators(new_gens, report);
@@ -243,17 +252,21 @@ Semigroup::Semigroup(const Semigroup&       copy,
 // Destructor
 
 Semigroup::~Semigroup() {
-
   _tmp_product->really_delete();
   delete _tmp_product;
+
+  _id->really_delete();
+  delete _id;
 
   delete _left;
   delete _right;
   delete _sorted;
   delete _pos_sorted;
 
+  // delete those generators not stored in _elements
   for (auto x : _duplicate_gens) {
-    _gens->at(x.first)->really_delete();
+    (*_gens)[x.first]->really_delete();
+    delete (*_gens)[x.first];
   }
   delete _gens;
 
@@ -262,9 +275,6 @@ Semigroup::~Semigroup() {
     delete x;
   }
   delete _elements;
-
-  _id->really_delete();
-  delete _id;
 }
 
 // Product by tracing in the left or right Cayley graph
@@ -272,15 +282,15 @@ Semigroup::~Semigroup() {
 Semigroup::pos_t Semigroup::product_by_reduction(pos_t i, pos_t j) const {
   assert(i < _nr && j < _nr);
   if (length_const(i) <= length_const(j)) {
-    while (i != (size_t) -1) {
-      j = _left->get(j, _final.at(i));
-      i = _prefix.at(i);
+    while (i != UNDEFINED) {
+      j = _left->get(j, _final[i]);
+      i = _prefix[i];
     }
     return j;
   } else {
-    while (j != (size_t) -1) {
-      i = _right->get(i, _first.at(j));
-      j = _suffix.at(j);
+    while (j != UNDEFINED) {
+      i = _right->get(i, _first[j]);
+      j = _suffix[j];
     }
     return i;
   }
@@ -294,7 +304,7 @@ Semigroup::pos_t Semigroup::fast_product(pos_t i, pos_t j) const {
       || length_const(j) < 2 * _tmp_product->complexity()) {
     return product_by_reduction(i, j);
   } else {
-    _tmp_product->redefine(_elements->at(i), _elements->at(j));
+    _tmp_product->redefine((*_elements)[i], (*_elements)[j]);
     return _map.find(_tmp_product)->second;
   }
 }
@@ -303,7 +313,7 @@ Semigroup::pos_t Semigroup::fast_product(pos_t i, pos_t j) const {
 
 size_t Semigroup::nr_idempotents(bool report, size_t nr_threads) {
   if (_nr_idempotents == 0) {
-    enumerate(-1, report);
+    enumerate(report);
 
     _reporter.report(report);
     _reporter.start_timer();
@@ -316,8 +326,8 @@ size_t Semigroup::nr_idempotents(bool report, size_t nr_threads) {
 
       if (_nr * _tmp_product->complexity() < sum_word_lengths) {
         for (size_t i = 0; i < _nr; i++) {
-          _tmp_product->redefine(_elements->at(i), _elements->at(i));
-          if (*_tmp_product == *_elements->at(i)) {
+          _tmp_product->redefine((*_elements)[i], (*_elements)[i]);
+          if (*_tmp_product == *(*_elements)[i]) {
             _nr_idempotents++;
           }
         }
@@ -422,15 +432,15 @@ void Semigroup::factorisation(word_t& word, pos_t pos, bool report) {
   if (pos < _nr) {
     word.clear();
     while (pos != UNDEFINED) {
-      word.push_back(_first.at(pos));
-      pos = _suffix.at(pos);
+      word.push_back(_first[pos]);
+      pos = _suffix[pos];
     }
   }
 }
 
 void Semigroup::next_relation(std::vector<size_t>& relation, bool report) {
   if (!is_done()) {
-    enumerate(-1, report);
+    enumerate(report);
   }
 
   relation.clear();  // FIXME use an array instead since this has fixed size
@@ -439,17 +449,17 @@ void Semigroup::next_relation(std::vector<size_t>& relation, bool report) {
     return;
   }
 
-  if (_relation_pos != (size_t) -1) {
+  if (_relation_pos != UNDEFINED) {
     while (_relation_pos < _nr) {
       while (_relation_gen < _nrgens) {
-        if (!_reduced.get(_index.at(_relation_pos), _relation_gen)
-            && (_relation_pos < _lenindex.at(1)
-                || _reduced.get(_suffix.at(_index.at(_relation_pos)),
+        if (!_reduced.get(_index[_relation_pos], _relation_gen)
+            && (_relation_pos < _lenindex[1]
+                || _reduced.get(_suffix[_index[_relation_pos]],
                                 _relation_gen))) {
-          relation.push_back(_index.at(_relation_pos));
+          relation.push_back(_index[_relation_pos]);
           relation.push_back(_relation_gen);
           relation.push_back(
-              _right->get(_index.at(_relation_pos), _relation_gen));
+              _right->get(_index[_relation_pos], _relation_gen));
           break;
         }
         _relation_gen++;
@@ -470,8 +480,8 @@ void Semigroup::next_relation(std::vector<size_t>& relation, bool report) {
   } else {
     // duplicate generators
     if (_relation_gen < _duplicate_gens.size()) {
-      relation.push_back(_duplicate_gens.at(_relation_gen).first);
-      relation.push_back(_duplicate_gens.at(_relation_gen).second);
+      relation.push_back(_duplicate_gens[_relation_gen].first);
+      relation.push_back(_duplicate_gens[_relation_gen].second);
       _relation_gen++;
     } else {
       _relation_gen = 0;
@@ -492,13 +502,13 @@ void Semigroup::enumerate(size_t limit, bool report) {
   _reporter(__func__) << "limit = " << limit << std::endl;
 
   // multiply the generators by every generator
-  if (_pos < _lenindex.at(1)) {
+  if (_pos < _lenindex[1]) {
     size_t nr_shorter_elements = _nr;
-    while (_pos < _lenindex.at(1)) {
-      size_t i          = _index.at(_pos);
-      _multiplied.at(i) = true;
-      for (size_t j = 0; j < _nrgens; j++) {
-        _tmp_product->redefine(_elements->at(i), _gens->at(j));
+    while (_pos < _lenindex[1]) {
+      size_t i          = _index[_pos];
+      _multiplied[i] = true;
+      for (size_t j = 0; j != _nrgens; ++j) {
+        _tmp_product->redefine((*_elements)[i], (*_gens)[j]);
         auto it = _map.find(_tmp_product);
 
         if (it != _map.end()) {
@@ -507,7 +517,7 @@ void Semigroup::enumerate(size_t limit, bool report) {
         } else {
           is_one(_tmp_product, _nr);
           _elements->push_back(_tmp_product->really_copy());
-          _first.push_back(_first.at(i));
+          _first.push_back(_first[i]);
           _final.push_back(j);
           _index.push_back(_nr);
           _length.push_back(2);
@@ -515,16 +525,16 @@ void Semigroup::enumerate(size_t limit, bool report) {
           _prefix.push_back(i);
           _reduced.set(i, j, true);
           _right->set(i, j, _nr);
-          _suffix.push_back(_genslookup.at(j));
+          _suffix.push_back(_genslookup[j]);
           _nr++;
         }
       }
       _pos++;
     }
-    for (size_t i = 0; i < _pos; i++) {
-      size_t b = _final.at(_index.at(i));
-      for (size_t j = 0; j < _nrgens; j++) {
-        _left->set(_index.at(i), j, _right->get(_genslookup.at(j), b));
+    for (size_t i = 0; i != _pos; ++i) {
+      size_t b = _final[_index[i]];
+      for (size_t j = 0; j != _nrgens; ++j) {
+        _left->set(_index[i], j, _right->get(_genslookup[j], b));
       }
     }
     _wordlen++;
@@ -535,26 +545,26 @@ void Semigroup::enumerate(size_t limit, bool report) {
   // multiply the words of length > 1 by every generator
   bool stop = (_nr >= limit);
 
-  while (_pos < _nr && !stop) {
+  while (_pos != _nr && !stop) {
     size_t nr_shorter_elements = _nr;
-    while (_pos < _lenindex.at(_wordlen + 1) && !stop) {
-      size_t i          = _index.at(_pos);
-      size_t b          = _first.at(i);
-      size_t s          = _suffix.at(i);
-      _multiplied.at(i) = true;
-      for (size_t j = 0; j < _nrgens; j++) {
+    while (_pos != _lenindex[_wordlen + 1] && !stop) {
+      size_t i          = _index[_pos];
+      size_t b          = _first[i];
+      size_t s          = _suffix[i];
+      _multiplied[i] = true;
+      for (size_t j = 0; j != _nrgens; ++j) {
         if (!_reduced.get(s, j)) {
           size_t r = _right->get(s, j);
           if (_found_one && r == _pos_one) {
-            _right->set(i, j, _genslookup.at(b));
-          } else if (_prefix.at(r) != (size_t) -1) {  // r is not a generator
+            _right->set(i, j, _genslookup[b]);
+          } else if (_prefix[r] != UNDEFINED) {  // r is not a generator
             _right->set(
-                i, j, _right->get(_left->get(_prefix.at(r), b), _final.at(r)));
+                i, j, _right->get(_left->get(_prefix[r], b), _final[r]));
           } else {
-            _right->set(i, j, _right->get(_genslookup.at(b), _final.at(r)));
+            _right->set(i, j, _right->get(_genslookup[b], _final[r]));
           }
         } else {
-          _tmp_product->redefine(_elements->at(i), _gens->at(j));
+          _tmp_product->redefine((*_elements)[i], (*_gens)[j]);
           auto it = _map.find(_tmp_product);
 
           if (it != _map.end()) {
@@ -581,12 +591,12 @@ void Semigroup::enumerate(size_t limit, bool report) {
     }  // finished words of length <wordlen> + 1
     expand(_nr - nr_shorter_elements);
 
-    if (_pos > _nr || _pos == _lenindex.at(_wordlen + 1)) {
-      for (size_t i = _lenindex.at(_wordlen); i < _pos; i++) {
-        size_t p = _prefix.at(_index.at(i));
-        size_t b = _final.at(_index.at(i));
-        for (size_t j = 0; j < _nrgens; j++) {
-          _left->set(_index.at(i), j, _right->get(_left->get(p, j), b));
+    if (_pos > _nr || _pos == _lenindex[_wordlen + 1]) {
+      for (size_t i = _lenindex[_wordlen]; i != _pos; ++i) {
+        size_t p = _prefix[_index[i]];
+        size_t b = _final[_index[i]];
+        for (size_t j = 0; j != _nrgens; ++j) {
+          _left->set(_index[i], j, _right->get(_left->get(p, j), b));
         }
       }
       _wordlen++;
@@ -631,12 +641,12 @@ void Semigroup::add_generators(const std::unordered_set<Element*>& coll,
     if (_map.find(x) == _map.end()) {
       if (!there_are_new_gens) {
         // erase the old index
-        _index.erase(_index.begin() + _lenindex.at(1), _index.end());
+        _index.erase(_index.begin() + _lenindex[1], _index.end());
 
         // set up old_new
         old_new.resize(old_nr, false);
         for (size_t i = 0; i < _genslookup.size(); i++) {
-          old_new.at(_genslookup.at(i)) = true;
+          old_new[_genslookup[i]] = true;
         }
         there_are_new_gens = true;
       }
@@ -652,8 +662,8 @@ void Semigroup::add_generators(const std::unordered_set<Element*>& coll,
       is_one(x, _nr);
       _map.insert(std::make_pair(x, _nr));
       _multiplied.push_back(false);
-      _prefix.push_back(-1);
-      _suffix.push_back(-1);
+      _prefix.push_back(UNDEFINED);
+      _suffix.push_back(UNDEFINED);
       _length.push_back(1);
 
       _nr++;
@@ -692,31 +702,31 @@ void Semigroup::add_generators(const std::unordered_set<Element*>& coll,
 
   while (nr_old_left > 0) {
     nr_shorter_elements = _nr;
-    while (_pos < _lenindex.at(_wordlen + 1) && nr_old_left > 0) {
-      size_t i = _index.at(_pos);  // position in _elements
-      size_t b = _first.at(i);
-      size_t s = _suffix.at(i);
-      if (_multiplied.at(i)) {
+    while (_pos < _lenindex[_wordlen + 1] && nr_old_left > 0) {
+      size_t i = _index[_pos];  // position in _elements
+      size_t b = _first[i];
+      size_t s = _suffix[i];
+      if (_multiplied[i]) {
         nr_old_left--;
-        // _elements.at(i) is in old semigroup, and its descendants are
+        // _elements[i] is in old semigroup, and its descendants are
         // known
         for (size_t j = 0; j < old_nrgens; j++) {
           size_t k = _right->get(i, j);
-          if (!old_new.at(k)) {  // it's new!
-            is_one(_elements->at(k), k);
-            _first.at(k)  = _first.at(i);
-            _final.at(k)  = j;
-            _length.at(k) = _wordlen + 2;
-            _prefix.at(k) = i;
+          if (!old_new[k]) {  // it's new!
+            is_one((*_elements)[k], k);
+            _first[k]  = _first[i];
+            _final[k]  = j;
+            _length[k] = _wordlen + 2;
+            _prefix[k] = i;
             _reduced.set(i, j, true);
             if (_wordlen == 0) {
-              _suffix.at(k) = _genslookup.at(j);
+              _suffix[k] = _genslookup[j];
             } else {
-              _suffix.at(k) = _right->get(s, j);
+              _suffix[k] = _right->get(s, j);
             }
             _index.push_back(k);
-            old_new.at(k) = true;
-          } else if (s == (size_t) -1 || _reduced.get(s, j)) {
+            old_new[k] = true;
+          } else if (s == UNDEFINED || _reduced.get(s, j)) {
             // this clause could be removed if _nrrules wasn't necessary
             _nrrules++;
           }
@@ -726,8 +736,8 @@ void Semigroup::add_generators(const std::unordered_set<Element*>& coll,
         }
 
       } else {
-        // _elements.at(i) is not in old
-        _multiplied.at(i) = true;
+        // _elements[i] is not in old
+        _multiplied[i] = true;
         for (size_t j = 0; j < _nrgens; j++) {
           closure_update(i, j, b, s, old_new, old_nr);
         }
@@ -736,22 +746,22 @@ void Semigroup::add_generators(const std::unordered_set<Element*>& coll,
     }  // finished words of length <wordlen> + 1
 
     expand(_nr - nr_shorter_elements);
-    if (_pos > _nr || _pos == _lenindex.at(_wordlen + 1)) {
+    if (_pos > _nr || _pos == _lenindex[_wordlen + 1]) {
       if (_wordlen == 0) {
         for (size_t i = 0; i < _pos; i++) {
-          size_t b = _final.at(_index.at(i));
+          size_t b = _final[_index[i]];
           for (size_t j = 0; j < _nrgens; j++) {
             // TODO(JDM) reuse old info here!
-            _left->set(_index.at(i), j, _right->get(_genslookup.at(j), b));
+            _left->set(_index[i], j, _right->get(_genslookup[j], b));
           }
         }
       } else {
-        for (size_t i = _lenindex.at(_wordlen); i < _pos; i++) {
-          size_t p = _prefix.at(_index.at(i));
-          size_t b = _final.at(_index.at(i));
+        for (size_t i = _lenindex[_wordlen]; i < _pos; i++) {
+          size_t p = _prefix[_index[i]];
+          size_t b = _final[_index[i]];
           for (size_t j = 0; j < _nrgens; j++) {
             // TODO(JDM) reuse old info here!
-            _left->set(_index.at(i), j, _right->get(_left->get(p, j), b));
+            _left->set(_index[i], j, _right->get(_left->get(p, j), b));
           }
         }
       }
@@ -778,7 +788,7 @@ void Semigroup::sort_elements(bool report) {
   if (_sorted != nullptr) {
     return;
   }
-  enumerate(-1, report);
+  enumerate(report);
   _sorted = new std::vector<std::pair<Element*, size_t>>();
   _sorted->reserve(_elements->size());
   for (size_t i = 0; i < _elements->size(); i++) {
@@ -814,15 +824,15 @@ void inline Semigroup::closure_update(pos_t              i,
   if (_wordlen != 0 && !_reduced.get(s, j)) {
     size_t r = _right->get(s, j);
     if (_found_one && r == _pos_one) {
-      _right->set(i, j, _genslookup.at(b));
-    } else if (_prefix.at(r) != (size_t) -1) {
+      _right->set(i, j, _genslookup[b]);
+    } else if (_prefix[r] != UNDEFINED) {
       _right->set(
-          i, j, _right->get(_left->get(_prefix.at(r), b), _final.at(r)));
+          i, j, _right->get(_left->get(_prefix[r], b), _final[r]));
     } else {
-      _right->set(i, j, _right->get(_genslookup.at(b), _final.at(r)));
+      _right->set(i, j, _right->get(_genslookup[b], _final[r]));
     }
   } else {
-    _tmp_product->redefine(_elements->at(i), _gens->at(j));
+    _tmp_product->redefine((*_elements)[i], (*_gens)[j]);
     auto it = _map.find(_tmp_product);
     if (it == _map.end()) {  // it's new!
       is_one(_tmp_product, _nr);
@@ -835,29 +845,29 @@ void inline Semigroup::closure_update(pos_t              i,
       _reduced.set(i, j, true);
       _right->set(i, j, _nr);
       if (_wordlen == 0) {
-        _suffix.push_back(_genslookup.at(j));
+        _suffix.push_back(_genslookup[j]);
       } else {
         _suffix.push_back(_right->get(s, j));
       }
       _index.push_back(_nr);
       _nr++;
-    } else if (it->second < old_nr && !old_new.at(it->second)) {
+    } else if (it->second < old_nr && !old_new[it->second]) {
       // we didn't process it yet!
       is_one(_tmp_product, it->second);
-      _first.at(it->second)  = b;
-      _final.at(it->second)  = j;
-      _length.at(it->second) = _wordlen + 2;
-      _prefix.at(it->second) = i;
+      _first[it->second]  = b;
+      _final[it->second]  = j;
+      _length[it->second] = _wordlen + 2;
+      _prefix[it->second] = i;
       _reduced.set(i, j, true);
       _right->set(i, j, it->second);
       if (_wordlen == 0) {
-        _suffix.at(it->second) = _genslookup.at(j);
+        _suffix[it->second] = _genslookup[j];
       } else {
-        _suffix.at(it->second) = _right->get(s, j);
+        _suffix[it->second] = _right->get(s, j);
       }
       _index.push_back(it->second);
-      old_new.at(it->second) = true;
-    } else {  // it->second >= old->_nr || old_new.at(it->second)
+      old_new[it->second] = true;
+    } else {  // it->second >= old->_nr || old_new[it->second]
       // it's old
       _right->set(i, j, it->second);
       _nrrules++;
