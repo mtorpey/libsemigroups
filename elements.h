@@ -183,8 +183,9 @@ class PartialTransformation : public ElementWithVectorData<S, T> {
   size_t hash_value() const override {
     size_t seed = 0;
     size_t deg  = this->degree();
-    for (size_t i = 0; i < deg; i++) {
-      seed = ((seed * deg) + this->_vector->at(i));
+    for (auto val : *(this->_vector)) {
+      seed *= deg;
+      seed += val;
     }
     return seed;
   }
