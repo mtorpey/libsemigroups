@@ -100,9 +100,7 @@ class Reporter {
   }
 
   template <class T> void set_class_name(T const& obj) {
-    const char* mangled = typeid(obj).name();
-    _class = abi::__cxa_demangle(mangled, 0, 0, 0);
-    delete mangled;
+    _class = abi::__cxa_demangle(typeid(obj).name(), 0, 0, 0);
   }
 
   void lock() {
