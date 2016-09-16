@@ -769,8 +769,7 @@ class Semigroup {
   void nr_idempotents_thread(size_t  thread_id,
                              size_t& nr,
                              pos_t   begin,
-                             pos_t   end,
-                             bool    report);
+                             pos_t   end);
 
   // Expand the data structures in the semigroup with space for <nr> elements
 

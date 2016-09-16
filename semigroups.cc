@@ -134,7 +134,9 @@ Semigroup::Semigroup(const Semigroup& copy)
       _sorted(nullptr),
       _pos_sorted(nullptr),
       _suffix(copy._suffix),
-      _wordlen(copy._wordlen) {
+      _wordlen(copy._wordlen),
+      _reporter(*this) {
+
   _elements->reserve(_nr);
   _map.reserve(_nr);
   _tmp_product = copy._id->really_copy();
@@ -179,7 +181,8 @@ Semigroup::Semigroup(const Semigroup&       copy,
       _right(new cayley_graph_t(*copy._right)),
       _sorted(nullptr),
       _pos_sorted(nullptr),
-      _wordlen(0) {
+      _wordlen(0),
+      _reporter(*this) {
   assert(!coll->empty());
 
   _elements->reserve(copy._nr);
@@ -317,13 +320,13 @@ size_t Semigroup::nr_idempotents(bool report, size_t nr_threads) {
 
     _reporter.report(report);
     _reporter.start_timer();
-    _reporter(__func__);
-    if (nr_threads == 1 || size() < 65537) {
-      size_t sum_word_lengths = 0;
-      for (size_t i = 1; i < _lenindex.size(); i++) {
-        sum_word_lengths += i * (_lenindex[i] - _lenindex[i - 1]);
-      }
 
+    size_t sum_word_lengths = 0;
+    for (size_t i = 1; i < _lenindex.size(); i++) {
+      sum_word_lengths += i * (_lenindex[i] - _lenindex[i - 1]);
+    }
+
+    if (nr_threads == 1 || size() < 65537) {
       if (_nr * _tmp_product->complexity() < sum_word_lengths) {
         for (size_t i = 0; i < _nr; i++) {
           _tmp_product->redefine((*_elements)[i], (*_elements)[i]);
@@ -339,32 +342,45 @@ size_t Semigroup::nr_idempotents(bool report, size_t nr_threads) {
         }
       }
     } else {
-      pos_t                    begin = 0;
-      pos_t                    end   = size() / nr_threads;
+      size_t                   av_load     = sum_word_lengths / nr_threads;
+      pos_t                    begin       = 0;
+      pos_t                    end         = 0;
+      size_t                   total_load  = 0;
+
       std::vector<size_t>      nr(nr_threads, 0);
       std::vector<std::thread> threads;
-      // FIXME distribute better here!
+      _reporter.report(report);
+
       for (size_t i = 0; i < nr_threads; i++) {
+        size_t thread_load = 0;
+        if (i != nr_threads - 1) {
+          while (thread_load < av_load) {
+            thread_load += length_const(end);
+            end++;
+          }
+          total_load += thread_load;
+        } else {
+          end = size();
+          thread_load = sum_word_lengths - total_load;
+        }
+        _reporter(__func__, 0) << "thread " << i + 1 << " has load " << thread_load
+                               << std::endl;
         threads.push_back(std::thread(&Semigroup::nr_idempotents_thread,
                                       this,
-                                      i,
+                                      i + 1,
                                       std::ref(nr[i]),
                                       begin,
-                                      end,
-                                      report));
+                                      end));
         begin = end;
-        if (i == nr_threads - 1) {
-          end = size();
-        } else {
-          end += size() / nr_threads;
-        }
       }
+
       for (size_t i = 0; i < nr_threads; i++) {
         threads[i].join();
         _nr_idempotents += nr[i];
       }
     }
   }
+  _reporter(__func__, 0);
   _reporter.stop_timer();
   return _nr_idempotents;
 }
@@ -800,19 +816,25 @@ void Semigroup::sort_elements(bool report) {
 void Semigroup::nr_idempotents_thread(size_t  thread_id,
                                       size_t& nr,
                                       pos_t   begin,
-                                      pos_t   end,
-                                      bool    report) {
-  Reporter reporter(*this);
-  reporter.report(report);
-  reporter.start_timer();
-  reporter(__func__, thread_id);
+                                      pos_t   end) {
+  Timer timer;
+  timer.start();
 
-  for (pos_t i = begin; i < end; i++) {
-    if (product_by_reduction(i, i) == i) {
+  for (pos_t k = begin; k < end; k++) {
+    // this is product_by_reduction
+    pos_t i = k, j = k;
+    while (j != UNDEFINED) {
+      i = _right->get(i, _first[j]);
+      j = _suffix[j];
+    }
+    if (i == k) {
       nr++;
     }
   }
-  reporter.stop_timer();
+  _reporter.lock();
+  _reporter(__func__, thread_id) << "elapsed time = " << timer.string()
+                                 << std::endl;
+  _reporter.unlock();
 }
 
 void inline Semigroup::closure_update(pos_t              i,
