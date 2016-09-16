@@ -40,10 +40,9 @@ class Reporter {
  public:
   template <class T>
   explicit Reporter(T const& obj, size_t thread_id = 0)
-      : _class(abi::__cxa_demangle(typeid(obj).name(), 0, 0, 0)),
-        _timer(),
-        _thread_id(thread_id),
-        _level(DEFAULT_LEVEL) {}  // FIXME init other data members
+      : _class(), _timer(), _thread_id(thread_id), _level(DEFAULT_LEVEL) {
+    set_class_name(obj);
+  }  // FIXME init other data members
 
   explicit Reporter(size_t thread_id = 0)
       : _class(), _timer(), _thread_id(thread_id), _level(DEFAULT_LEVEL) {}
@@ -101,7 +100,9 @@ class Reporter {
   }
 
   template <class T> void set_class_name(T const& obj) {
-    _class = abi::__cxa_demangle(typeid(obj).name(), 0, 0, 0);
+    const char* mangled = typeid(obj).name();
+    _class = abi::__cxa_demangle(mangled, 0, 0, 0);
+    delete mangled;
   }
 
   void lock() {

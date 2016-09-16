@@ -737,8 +737,11 @@ class Semigroup {
   // elements than before (whether it is fully enumerating or not). It can also
   // be the case that the new generators are the only new elements, unlike say,
   // in the case of groups.
+  //
+  // The elements the argument <coll> are copied into the semigroup, and should
+  // be deleted by the caller.
 
-  void add_generators(const std::unordered_set<Element*>& coll, bool report);
+  void add_generators(const std::unordered_set<Element*>* coll, bool report);
 
   // static
   //

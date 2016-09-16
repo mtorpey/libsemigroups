@@ -3,3 +3,6 @@
 .deps
 .libs
 html
+.report.h.swo
+.semigroups.cc.swo
+.semigroups.h.swo

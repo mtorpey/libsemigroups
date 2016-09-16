@@ -196,7 +196,7 @@ Semigroup::Semigroup(const Semigroup&       copy,
   _prefix.resize(copy._nr, 0);
   _suffix.resize(copy._nr, 0);
 
-  std::unordered_set<Element*> new_gens;
+  std::unordered_set<Element*>* new_gens = new std::unordered_set<Element*>();
 
 #ifndef NDEBUG
   size_t deg = (*coll)[0]->degree();
@@ -205,14 +205,14 @@ Semigroup::Semigroup(const Semigroup&       copy,
   // remove duplicate generators
   for (Element const* x : *coll) {
     assert(x->degree() == deg);
-    new_gens.insert(x->really_copy());
+    new_gens->insert(x->really_copy());
     // copy here so that after add_generators, the semigroup is responsible
     // for the destruction of gens.
   }
 
-  assert((*new_gens.begin())->degree() >= copy.degree());
+  assert((*new_gens->begin())->degree() >= copy.degree());
 
-  size_t deg_plus = (*new_gens.begin())->degree() - copy.degree();
+  size_t deg_plus = (*new_gens->begin())->degree() - copy.degree();
 
   if (deg_plus != 0) {
     _degree += deg_plus;
@@ -250,6 +250,10 @@ Semigroup::Semigroup(const Semigroup&       copy,
   }
 
   add_generators(new_gens, report);
+  for (Element* x : *new_gens) {
+    delete x;
+  }
+  delete new_gens;
 }
 
 // Destructor
@@ -336,6 +340,7 @@ size_t Semigroup::nr_idempotents(bool report, size_t nr_threads) {
         }
       } else {
         for (size_t i = 0; i < _nr; i++) {
+          // TODO(JDM) redo this to not use product_by_reduction
           if (product_by_reduction(i, i) == i) {
             _nr_idempotents++;
           }
@@ -350,7 +355,7 @@ size_t Semigroup::nr_idempotents(bool report, size_t nr_threads) {
       std::vector<size_t>      nr(nr_threads, 0);
       std::vector<std::thread> threads;
       _reporter.report(report);
-
+      // TODO(JDM) use less threads if the av_load is too low
       for (size_t i = 0; i < nr_threads; i++) {
         size_t thread_load = 0;
         if (i != nr_threads - 1) {
@@ -635,13 +640,13 @@ void Semigroup::enumerate(size_t limit, bool report) {
   _reporter.stop_timer();
 }
 
-void Semigroup::add_generators(const std::unordered_set<Element*>& coll,
+void Semigroup::add_generators(const std::unordered_set<Element*>* coll,
                                bool                                report) {
-  if (coll.empty()) {
+  if (coll->empty()) {
     return;
   }
 
-  assert(degree() == (*coll.begin())->degree());
+  assert(degree() == (*coll->begin())->degree());
 
   _reporter.report(report);
   _reporter.start_timer();
@@ -655,7 +660,7 @@ void Semigroup::add_generators(const std::unordered_set<Element*>& coll,
   std::vector<bool> old_new;  // have we seen _elements->at(i) yet in new?
 
   // add the new generators to new _gens, _elements, and _index
-  for (Element* x : coll) {
+  for (Element* x : *coll) {
     if (_map.find(x) == _map.end()) {
       if (!there_are_new_gens) {
         // erase the old index
@@ -672,13 +677,13 @@ void Semigroup::add_generators(const std::unordered_set<Element*>& coll,
       _first.push_back(_gens->size());
       _final.push_back(_gens->size());
 
-      _gens->push_back(x);
-      _elements->push_back(x);
+      _gens->push_back(x->really_copy());
+      _elements->push_back(_gens->back());
       _genslookup.push_back(_nr);
       _index.push_back(_nr);
 
       is_one(x, _nr);
-      _map.insert(std::make_pair(x, _nr));
+      _map.insert(std::make_pair(_gens->back(), _nr));
       _multiplied.push_back(false);
       _prefix.push_back(UNDEFINED);
       _suffix.push_back(UNDEFINED);
