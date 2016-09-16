@@ -363,8 +363,10 @@ size_t Semigroup::nr_idempotents(bool report, size_t nr_threads) {
           end = size();
           thread_load = sum_word_lengths - total_load;
         }
+        _reporter.lock();
         _reporter(__func__, 0) << "thread " << i + 1 << " has load " << thread_load
                                << std::endl;
+        _reporter.unlock();
         threads.push_back(std::thread(&Semigroup::nr_idempotents_thread,
                                       this,
                                       i + 1,

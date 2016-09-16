@@ -105,11 +105,15 @@ class Reporter {
   }
 
   void lock() {
-    _mtx.lock();
+    if (_report) {
+      _mtx.lock();
+    }
   }
 
   void unlock() {
-    _mtx.unlock();
+    if (_report) {
+      _mtx.unlock();
+    }
   }
 
   void report(bool val) {
