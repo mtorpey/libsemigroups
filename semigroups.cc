@@ -650,6 +650,7 @@ void Semigroup::add_generators(const std::unordered_set<Element*>* coll,
 
   _reporter.report(report);
   _reporter.start_timer();
+  _reporter(__func__);
 
   // get some parameters from the old semigroup
   size_t old_nrgens  = _nrgens;
@@ -791,9 +792,8 @@ void Semigroup::add_generators(const std::unordered_set<Element*>* coll,
       _lenindex.push_back(_index.size());
       _wordlen++;
     }
-    _reporter(__func__) << "found " << _nr << " elements, " << _nrrules
-                        << " rules, max word length "
-                        << current_max_word_length();
+    _reporter << "found " << _nr << " elements, " << _nrrules
+              << " rules, max word length " << current_max_word_length();
 
     if (!is_done()) {
       _reporter << ", so far" << std::endl;
