@@ -36,6 +36,9 @@ Semigroup::Semigroup(std::vector<Element*>* gens)
       _found_one(false),
       _gens(new std::vector<Element*>()),
       _genslookup(),
+      _idempotents(),
+      _idempotents_found(false),
+      _idempotents_start_pos(0),
       _index(),
       _left(new cayley_graph_t(gens->size())),
       _length(),
@@ -115,6 +118,9 @@ Semigroup::Semigroup(const Semigroup& copy)
       _gens(),
       _genslookup(copy._genslookup),
       _id(copy._id->really_copy()),
+      _idempotents(copy._idempotents),
+      _idempotents_found(copy._idempotents_found),
+      _idempotents_start_pos(copy._idempotents_start_pos),
       _index(copy._index),
       _left(new cayley_graph_t(*copy._left)),
       _length(copy._length),
@@ -166,11 +172,14 @@ Semigroup::Semigroup(const Semigroup&       copy,
                                     // add_generators
       _gens(new std::vector<Element*>()),
       _genslookup(copy._genslookup),
+      _idempotents(copy._idempotents),
+      _idempotents_found(false),
+      _idempotents_start_pos(copy._idempotents_start_pos),
       _left(new cayley_graph_t(*copy._left)),
       _multiplied(copy._multiplied),
       _nr(copy._nr),
       _nrgens(copy._nrgens),
-      _nr_idempotents(0),
+      _nr_idempotents(copy._nr_idempotents),
       _nrrules(0),
       _pos(copy._pos),
       _pos_one(copy._pos_one),  // copy in case degree doesn't change in
@@ -316,80 +325,31 @@ Semigroup::pos_t Semigroup::fast_product(pos_t i, pos_t j) const {
   }
 }
 
-// Count the number of idempotents
+// Get the number of idempotents
 
 size_t Semigroup::nr_idempotents(bool report, size_t nr_threads) {
-  if (_nr_idempotents == 0) {
-    enumerate(report);
-
-    _reporter.report(report);
-    _reporter.start_timer();
-
-    size_t sum_word_lengths = 0;
-    for (size_t i = 1; i < _lenindex.size(); i++) {
-      sum_word_lengths += i * (_lenindex[i] - _lenindex[i - 1]);
-    }
-
-    if (nr_threads == 1 || size() < 65537) {
-      if (_nr * _tmp_product->complexity() < sum_word_lengths) {
-        for (size_t i = 0; i < _nr; i++) {
-          _tmp_product->redefine((*_elements)[i], (*_elements)[i]);
-          if (*_tmp_product == *(*_elements)[i]) {
-            _nr_idempotents++;
-          }
-        }
-      } else {
-        for (size_t i = 0; i < _nr; i++) {
-          // TODO(JDM) redo this to not use product_by_reduction
-          if (product_by_reduction(i, i) == i) {
-            _nr_idempotents++;
-          }
-        }
-      }
-    } else {
-      size_t                   av_load     = sum_word_lengths / nr_threads;
-      pos_t                    begin       = 0;
-      pos_t                    end         = 0;
-      size_t                   total_load  = 0;
-
-      std::vector<size_t>      nr(nr_threads, 0);
-      std::vector<std::thread> threads;
-      _reporter.report(report);
-      // TODO(JDM) use less threads if the av_load is too low
-      for (size_t i = 0; i < nr_threads; i++) {
-        size_t thread_load = 0;
-        if (i != nr_threads - 1) {
-          while (thread_load < av_load) {
-            thread_load += length_const(end);
-            end++;
-          }
-          total_load += thread_load;
-        } else {
-          end = size();
-          thread_load = sum_word_lengths - total_load;
-        }
-        _reporter.lock();
-        _reporter(__func__, 0) << "thread " << i + 1 << " has load " << thread_load
-                               << std::endl;
-        _reporter.unlock();
-        threads.push_back(std::thread(&Semigroup::nr_idempotents_thread,
-                                      this,
-                                      i + 1,
-                                      std::ref(nr[i]),
-                                      begin,
-                                      end));
-        begin = end;
-      }
-
-      for (size_t i = 0; i < nr_threads; i++) {
-        threads[i].join();
-        _nr_idempotents += nr[i];
-      }
-    }
+  if (!_idempotents_found) {
+    find_idempotents(report, nr_threads);
   }
-  _reporter(__func__, 0);
-  _reporter.stop_timer();
   return _nr_idempotents;
+}
+
+// Const iterator to the first position of an idempotent
+
+typename std::vector<Semigroup::pos_t>::const_iterator
+Semigroup::idempotents_cbegin(bool report, size_t nr_threads) {
+  if (!_idempotents_found) {
+    find_idempotents(report, nr_threads);
+  }
+  return _idempotents.cbegin();
+}
+
+typename std::vector<Semigroup::pos_t>::const_iterator
+Semigroup::idempotents_cend(bool report, size_t nr_threads) {
+  if (!_idempotents_found) {
+    find_idempotents(report, nr_threads);
+  }
+  return _idempotents.cend();
 }
 
 // Get the position of an element in the semigroup
@@ -694,18 +654,18 @@ void Semigroup::add_generators(const std::unordered_set<Element*>* coll,
     }
   }
 
-  if (!there_are_new_gens) {  // everything in coll was already in the
-    // semigroup
+  if (!there_are_new_gens) {
+    // everything in coll was already in the semigroup
     _reporter.stop_timer();
     return;
   }
 
   // reset the data structure
-  _nr_idempotents = 0;
-  _nrrules        = _duplicate_gens.size();
-  _pos            = 0;
-  _wordlen        = 0;
-  _nrgens         = _gens->size();
+  _idempotents_found = false;
+  _nrrules           = _duplicate_gens.size();
+  _pos               = 0;
+  _wordlen           = 0;
+  _nrgens            = _gens->size();
   _lenindex.clear();
   _lenindex.push_back(0);
   _lenindex.push_back(_nrgens - _duplicate_gens.size());
@@ -792,8 +752,10 @@ void Semigroup::add_generators(const std::unordered_set<Element*>* coll,
       _lenindex.push_back(_index.size());
       _wordlen++;
     }
-    _reporter << "found " << _nr << " elements, " << _nrrules
-              << " rules, max word length " << current_max_word_length();
+
+    _reporter(__func__) << "found " << _nr << " elements, " << _nrrules
+                        << " rules, max word length "
+                        << current_max_word_length();
 
     if (!is_done()) {
       _reporter << ", so far" << std::endl;
@@ -820,10 +782,14 @@ void Semigroup::sort_elements(bool report) {
   std::sort(_sorted->begin(), _sorted->end(), Less(*this));
 }
 
-void Semigroup::nr_idempotents_thread(size_t  thread_id,
-                                      size_t& nr,
-                                      pos_t   begin,
-                                      pos_t   end) {
+// FIXME(JDM) improve this to either multiply or product_by_reduction depending
+// on which will be quickest. It is actually slow because of not doing this
+
+void Semigroup::idempotents_thread(size_t              thread_id,
+                                   size_t&             nr,
+                                   std::vector<pos_t>& idempotents,
+                                   pos_t               begin,
+                                   pos_t               end) {
   Timer timer;
   timer.start();
 
@@ -835,6 +801,7 @@ void Semigroup::nr_idempotents_thread(size_t  thread_id,
       j = _suffix[j];
     }
     if (i == k) {
+      idempotents.push_back(k);
       nr++;
     }
   }
@@ -902,4 +869,92 @@ void inline Semigroup::closure_update(pos_t              i,
       _nrrules++;
     }
   }
+}
+
+// TOOD(JDM) improve this if R/L-classes are known to stop performing the
+// product if we fall out of the R-class of the initial element.
+
+void Semigroup::find_idempotents(bool report, size_t nr_threads) {
+  _idempotents_found = true;
+  enumerate(report);
+
+  _reporter.report(report);
+  _reporter.start_timer();
+
+  size_t sum_word_lengths = 0;
+  for (size_t i = _idempotents_start_pos; i < _lenindex.size(); i++) {
+    sum_word_lengths += i * (_lenindex[i] - _lenindex[i - 1]);
+  }
+  // TODO(JDM) make the number in the next line a macro or something so that it
+  // is easy to change.
+  if (nr_threads == 1 || size() < 823543) {
+    if ((_nr - _idempotents_start_pos) * _tmp_product->complexity()
+        < sum_word_lengths) {
+      for (size_t i = _idempotents_start_pos; i < _nr; i++) {
+        _tmp_product->redefine((*_elements)[i], (*_elements)[i]);
+        if (*_tmp_product == *(*_elements)[i]) {
+          _nr_idempotents++;
+          _idempotents.push_back(i);
+        }
+      }
+    } else {
+      for (size_t i = _idempotents_start_pos; i < _nr; i++) {
+        // TODO(JDM) redo this to not use product_by_reduction
+        if (product_by_reduction(i, i) == i) {
+          _nr_idempotents++;
+          _idempotents.push_back(i);
+        }
+      }
+    }
+  } else {
+    size_t av_load    = sum_word_lengths / nr_threads;
+    pos_t  begin      = _idempotents_start_pos;
+    pos_t  end        = _idempotents_start_pos;
+    size_t total_load = 0;
+
+    std::vector<size_t> nr(nr_threads, 0);
+    std::vector<std::vector<pos_t>> idempotents(nr_threads,
+                                                std::vector<pos_t>());
+    std::vector<std::thread> threads;
+    _reporter.report(report);
+    // TODO(JDM) use less threads if the av_load is too low
+    for (size_t i = 0; i < nr_threads; i++) {
+      size_t thread_load = 0;
+      if (i != nr_threads - 1) {
+        while (thread_load < av_load) {
+          thread_load += length_const(end);
+          end++;
+        }
+        total_load += thread_load;
+      } else {
+        end         = size();
+        thread_load = sum_word_lengths - total_load;
+      }
+      _reporter.lock();
+      _reporter(__func__, 0) << "thread " << i + 1 << " has load "
+                             << thread_load << std::endl;
+      _reporter.unlock();
+      threads.push_back(std::thread(&Semigroup::idempotents_thread,
+                                    this,
+                                    i + 1,
+                                    std::ref(nr[i]),
+                                    std::ref(idempotents[i]),
+                                    begin,
+                                    end));
+      begin = end;
+    }
+
+    for (size_t i = 0; i < nr_threads; i++) {
+      threads[i].join();
+      _nr_idempotents += nr[i];
+    }
+    _idempotents.reserve(_nr_idempotents);
+    for (size_t i = 0; i < nr_threads; i++) {
+      _idempotents.insert(
+          _idempotents.end(), idempotents[i].begin(), idempotents[i].end());
+    }
+  }
+  _idempotents_start_pos = _nr;
+  _reporter(__func__, 0);
+  _reporter.stop_timer();
 }

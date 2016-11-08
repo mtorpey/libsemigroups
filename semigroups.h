@@ -399,13 +399,38 @@ class Semigroup {
   // the semigroup are tested for idempotency in <nr_threads> concurrent
   // threads.
   //
-  // The value of the number of idempotents is stored after it is first
-  // computed.
+  // The value of the positions, and number, of idempotents is stored after
+  // they are first computed.
   //
   // @return the total number of idempotents in the semigroup.
 
   size_t nr_idempotents(bool   report     = DEFAULT_REPORT_VALUE,
                         size_t nr_threads = 1);
+
+  // non-const
+  // @report report during enumeration and/or counting, if any (defaults to
+  // <DEFAULT_REPORT_VALUE>)
+  // @nr_threads the number of threads to use (defaults to 1)
+  //
+  // This method is non-const since it may involve fully enumerating the
+  // semigroup.
+  //
+  // If the size of the semigroup is less than 65537 or the number of threads
+  // is 1, then this is a single-threaded function. Otherwise, the elements of
+  // the semigroup are tested for idempotency in <nr_threads> concurrent
+  // threads.
+  //
+  // The value of the positions, and number, of idempotents is stored after
+  // they are first computed.
+  //
+  // @return a vector of the positions <pos_t> of the idempotents in the
+  // semigroup.
+
+  std::vector<pos_t>::const_iterator
+  idempotents_cbegin(bool report = DEFAULT_REPORT_VALUE, size_t nr_threads = 1);
+
+  std::vector<pos_t>::const_iterator
+  idempotents_cend(bool report = DEFAULT_REPORT_VALUE, size_t nr_threads = 1);
 
   // non-const
   // @report report during enumeration and/or counting, if any (defaults to
@@ -554,14 +579,14 @@ class Semigroup {
   // semigroup.
   //
   // @return the element of the semigroup in position <pos>, or a *nullptr* if
-  // <pos> there is no such element.
+  // there is no such element.
 
   Element* at(pos_t pos, bool report = DEFAULT_REPORT_VALUE);
 
   // const
   // @pos a valid position of an already enumerated element of the semigroup.
   //
-  // This method is const and does not checks on its arguments.
+  // This method is const and does no checks on its arguments.
   //
   // @return the element of the semigroup in position <pos>.
 
@@ -766,13 +791,18 @@ class Semigroup {
 
   void sort_elements(bool report = DEFAULT_REPORT_VALUE);
 
+  // Find the idempotents and store their positions and their number
+  void find_idempotents(bool   report     = DEFAULT_REPORT_VALUE,
+                        size_t nr_threads = 1);
+
   // Function for counting idempotents in a thread, changes the parameter <nr>
   // in place.
 
-  void nr_idempotents_thread(size_t  thread_id,
-                             size_t& nr,
-                             pos_t   begin,
-                             pos_t   end);
+  void idempotents_thread(size_t              thread_id,
+                          size_t&             nr,
+                          std::vector<pos_t>& idempotents,
+                          pos_t               begin,
+                          pos_t               end);
 
   // Expand the data structures in the semigroup with space for <nr> elements
 
@@ -794,7 +824,6 @@ class Semigroup {
   }
 
   // Update the data structure in add_generators
-
   void inline closure_update(pos_t              i,
                              letter_t           j,
                              letter_t           b,
@@ -816,17 +845,21 @@ class Semigroup {
   size_t _batch_size;
   size_t _degree;
   std::vector<std::pair<size_t, size_t>> _duplicate_gens;
-  std::vector<Element*>* _elements;
-  std::vector<size_t>    _final;
-  std::vector<size_t>    _first;
-  bool                   _found_one;
-  std::vector<Element*>* _gens;
-  std::vector<size_t>    _genslookup;
-  Element*               _id;
-  std::vector<size_t>    _index;
-  cayley_graph_t*        _left;
-  std::vector<size_t>    _length;
-  std::vector<size_t>    _lenindex;
+  std::vector<Element*>*    _elements;
+  std::vector<size_t>       _final;
+  std::vector<size_t>       _first;
+  bool                      _found_one;
+  std::vector<Element*>*    _gens;
+  std::vector<size_t>       _genslookup;
+  Element*                  _id;
+  std::vector<size_t>       _idempotents;
+  bool                      _idempotents_found;
+  pos_t                     _idempotents_start_pos;
+  std::vector<size_t>       _index;
+  std::vector<uint_fast8_t> _info;
+  cayley_graph_t*           _left;
+  std::vector<size_t>       _length;
+  std::vector<size_t>       _lenindex;
   std::unordered_map<const Element*, size_t, hash<const Element*>, myequal>
                       _map;
   std::vector<bool>   _multiplied;
@@ -848,6 +881,8 @@ class Semigroup {
   size_t               _wordlen;
 
   Reporter      _reporter;
+
+  static uint_fast8_t IS_IDEMPOTENT;
 };
 
 #endif  // SEMIGROUPSPLUSPLUS_SEMIGROUPS_H_
