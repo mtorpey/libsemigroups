@@ -882,7 +882,9 @@ void Semigroup::find_idempotents(bool report, size_t nr_threads) {
   _reporter.start_timer();
 
   size_t sum_word_lengths = 0;
-  for (size_t i = _idempotents_start_pos; i < _lenindex.size(); i++) {
+  for (size_t i = length_non_const(_idempotents_start_pos);
+       i < _lenindex.size();
+       i++) {
     sum_word_lengths += i * (_lenindex[i] - _lenindex[i - 1]);
   }
   // TODO(JDM) make the number in the next line a macro or something so that it
