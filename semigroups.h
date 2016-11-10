@@ -408,6 +408,22 @@ class Semigroup {
                         size_t nr_threads = 1);
 
   // non-const
+  // @pos a valid position of an element of the semigroup.
+  // @report report during enumeration and/or counting, if any (defaults to
+  // <DEFAULT_REPORT_VALUE>)
+  // @nr_threads the number of threads to use (defaults to 1)
+  //
+  // This method is non-const since it may involve fully enumerating the
+  // semigroup.
+  //
+  // @return true if the <pos> element of the semigroup is an idempotent and
+  // return false otherwise.
+
+  bool is_idempotent(pos_t  pos,
+                     bool   report     = DEFAULT_REPORT_VALUE,
+                     size_t nr_threads = 1);
+
+  // non-const
   // @report report during enumeration and/or counting, if any (defaults to
   // <DEFAULT_REPORT_VALUE>)
   // @nr_threads the number of threads to use (defaults to 1)
@@ -423,11 +439,30 @@ class Semigroup {
   // The value of the positions, and number, of idempotents is stored after
   // they are first computed.
   //
-  // @return a vector of the positions <pos_t> of the idempotents in the
-  // semigroup.
+  // @return a const iterator for the positions <pos_t> of idempotents in
+  // the semigroup.
 
   std::vector<pos_t>::const_iterator
   idempotents_cbegin(bool report = DEFAULT_REPORT_VALUE, size_t nr_threads = 1);
+
+  // non-const
+  // @report report during enumeration and/or counting, if any (defaults to
+  // <DEFAULT_REPORT_VALUE>)
+  // @nr_threads the number of threads to use (defaults to 1)
+  //
+  // This method is non-const since it may involve fully enumerating the
+  // semigroup.
+  //
+  // If the size of the semigroup is less than 65537 or the number of threads
+  // is 1, then this is a single-threaded function. Otherwise, the elements of
+  // the semigroup are tested for idempotency in <nr_threads> concurrent
+  // threads.
+  //
+  // The value of the positions, and number, of idempotents is stored after
+  // they are first computed.
+  //
+  // @return a const iterator for the positions <pos_t> of idempotents in
+  // the semigroup.
 
   std::vector<pos_t>::const_iterator
   idempotents_cend(bool report = DEFAULT_REPORT_VALUE, size_t nr_threads = 1);
@@ -801,6 +836,7 @@ class Semigroup {
   void idempotents_thread(size_t              thread_id,
                           size_t&             nr,
                           std::vector<pos_t>& idempotents,
+                          std::vector<bool>&  is_idempotent,
                           pos_t               begin,
                           pos_t               end);
 
@@ -855,8 +891,8 @@ class Semigroup {
   std::vector<size_t>       _idempotents;
   bool                      _idempotents_found;
   pos_t                     _idempotents_start_pos;
+  std::vector<bool>         _is_idempotent;
   std::vector<size_t>       _index;
-  std::vector<uint_fast8_t> _info;
   cayley_graph_t*           _left;
   std::vector<size_t>       _length;
   std::vector<size_t>       _lenindex;

@@ -39,6 +39,7 @@ Semigroup::Semigroup(std::vector<Element*>* gens)
       _idempotents(),
       _idempotents_found(false),
       _idempotents_start_pos(0),
+      _is_idempotent(),
       _index(),
       _left(new cayley_graph_t(gens->size())),
       _length(),
@@ -121,6 +122,7 @@ Semigroup::Semigroup(const Semigroup& copy)
       _idempotents(copy._idempotents),
       _idempotents_found(copy._idempotents_found),
       _idempotents_start_pos(copy._idempotents_start_pos),
+      _is_idempotent(copy._is_idempotent),
       _index(copy._index),
       _left(new cayley_graph_t(*copy._left)),
       _length(copy._length),
@@ -175,6 +177,7 @@ Semigroup::Semigroup(const Semigroup&       copy,
       _idempotents(copy._idempotents),
       _idempotents_found(false),
       _idempotents_start_pos(copy._idempotents_start_pos),
+      _is_idempotent(copy._is_idempotent),
       _left(new cayley_graph_t(*copy._left)),
       _multiplied(copy._multiplied),
       _nr(copy._nr),
@@ -332,6 +335,14 @@ size_t Semigroup::nr_idempotents(bool report, size_t nr_threads) {
     find_idempotents(report, nr_threads);
   }
   return _nr_idempotents;
+}
+
+bool Semigroup::is_idempotent(pos_t pos, bool report, size_t nr_threads) {
+  if (!_idempotents_found) {
+    find_idempotents(report, nr_threads);
+  }
+  assert(pos < size());
+  return _is_idempotent[pos];
 }
 
 // Const iterator to the first position of an idempotent
@@ -788,13 +799,15 @@ void Semigroup::sort_elements(bool report) {
 void Semigroup::idempotents_thread(size_t              thread_id,
                                    size_t&             nr,
                                    std::vector<pos_t>& idempotents,
+                                   std::vector<bool>&  is_idempotent,
                                    pos_t               begin,
                                    pos_t               end) {
   Timer timer;
   timer.start();
 
   for (pos_t k = begin; k < end; k++) {
-    // this is product_by_reduction
+    // this is product_by_reduction, don't have to consider lengths because
+    // they are equal!!
     pos_t i = k, j = k;
     while (j != UNDEFINED) {
       i = _right->get(i, _first[j]);
@@ -802,7 +815,10 @@ void Semigroup::idempotents_thread(size_t              thread_id,
     }
     if (i == k) {
       idempotents.push_back(k);
+      is_idempotent.push_back(true);
       nr++;
+    } else {
+      is_idempotent.push_back(false);
     }
   }
   _reporter.lock();
@@ -897,6 +913,9 @@ void Semigroup::find_idempotents(bool report, size_t nr_threads) {
         if (*_tmp_product == *(*_elements)[i]) {
           _nr_idempotents++;
           _idempotents.push_back(i);
+          _is_idempotent.push_back(true);
+        } else {
+          _is_idempotent.push_back(false);
         }
       }
     } else {
@@ -905,6 +924,9 @@ void Semigroup::find_idempotents(bool report, size_t nr_threads) {
         if (product_by_reduction(i, i) == i) {
           _nr_idempotents++;
           _idempotents.push_back(i);
+          _is_idempotent.push_back(true);
+        } else {
+          _is_idempotent.push_back(false);
         }
       }
     }
@@ -917,6 +939,8 @@ void Semigroup::find_idempotents(bool report, size_t nr_threads) {
     std::vector<size_t> nr(nr_threads, 0);
     std::vector<std::vector<pos_t>> idempotents(nr_threads,
                                                 std::vector<pos_t>());
+    std::vector<std::vector<bool>> is_idempotent(nr_threads,
+                                                 std::vector<bool>());
     std::vector<std::thread> threads;
     _reporter.report(report);
     // TODO(JDM) use less threads if the av_load is too low
@@ -941,6 +965,7 @@ void Semigroup::find_idempotents(bool report, size_t nr_threads) {
                                     i + 1,
                                     std::ref(nr[i]),
                                     std::ref(idempotents[i]),
+                                    std::ref(is_idempotent[i]),
                                     begin,
                                     end));
       begin = end;
@@ -951,9 +976,12 @@ void Semigroup::find_idempotents(bool report, size_t nr_threads) {
       _nr_idempotents += nr[i];
     }
     _idempotents.reserve(_nr_idempotents);
+    _is_idempotent.reserve(size());
     for (size_t i = 0; i < nr_threads; i++) {
       _idempotents.insert(
           _idempotents.end(), idempotents[i].begin(), idempotents[i].end());
+      _is_idempotent.insert(
+          _is_idempotent.end(), is_idempotent[i].begin(), is_idempotent[i].end());
     }
   }
   _idempotents_start_pos = _nr;
