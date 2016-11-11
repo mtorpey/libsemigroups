@@ -606,7 +606,7 @@ class Semigroup {
   }
 
   // non-const
-  // @pos a valid position of an element of the semigroup.
+  // @pos a position of an element of the semigroup.
   // @report report during enumeration, if any (defaults to
   // <DEFAULT_REPORT_VALUE>).
   //
