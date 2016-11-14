@@ -16,8 +16,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-// This file contains the declaration of a blocks class, which is needed by the
-// bipartitions code.
+// This file contains the declaration of the element class and its subclasses.
 
 #ifndef SEMIGROUPSPLUSPLUS_ELEMENTS_H_
 #define SEMIGROUPSPLUSPLUS_ELEMENTS_H_
@@ -349,11 +348,9 @@ class BooleanMat : public ElementWithVectorData<bool, BooleanMat> {
   void     redefine(Element const*, Element const*) override;
 };
 
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-// Bipartitions
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
+//
+// Class for bipartitions, which are partitions of
+// generating set.
 
 class Bipartition : public ElementWithVectorData<u_int32_t, Bipartition> {
  public:
