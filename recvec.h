@@ -56,7 +56,7 @@ template <typename T> class RecVec {
   // Constructs a copy of the given <RecVec> with the same number of rows as
   // the original and with some additional columns.
 
-  RecVec(const RecVec& copy, size_t nr_cols_to_add)
+  RecVec(const RecVec& copy, size_t nr_cols_to_add = 0)
       : _vec(),
         _nr_used_cols(copy._nr_used_cols),
         _nr_unused_cols(copy._nr_unused_cols),
@@ -232,7 +232,7 @@ template <typename T> class RecVec {
   //
   // @return the number of occurrences of **val** in the **i**th row.
 
-  size_t count(size_t i, T val) {
+  size_t count(size_t i, T val) const {
     assert(i < _nr_rows);
     return std::count(row_cbegin(i), row_cend(i), val);
   }
@@ -255,18 +255,17 @@ template <typename T> class RecVec {
     return row_begin(i) + _nr_used_cols;
   }
 
-  inline typename std::vector<T>::const_iterator row_cbegin(size_t i) {
-    return _vec.begin() + (_nr_used_cols + _nr_unused_cols) * i;
+  inline typename std::vector<T>::const_iterator row_cbegin(size_t i) const {
+    return _vec.cbegin() + (_nr_used_cols + _nr_unused_cols) * i;
   }
 
-  inline typename std::vector<T>::const_iterator row_cend(size_t i) {
-    return row_begin(i) + _nr_used_cols;
+  inline typename std::vector<T>::const_iterator row_cend(size_t i) const {
+    return row_cbegin(i) + _nr_used_cols;
   }
 
   // Iterator
   //
   // @return an iterator pointing at the beginning of the <RecVec>.
-
   inline typename std::vector<T>::iterator begin() {
     return _vec.begin();
   }
@@ -274,18 +273,18 @@ template <typename T> class RecVec {
   // Iterator
   //
   // @return an iterator pointing at the end of the <RecVec>.
-  void clear() {
-    _nr_unused_cols += _nr_used_cols;
-    _nr_used_cols = 0;
-    _nr_rows = 0;
-    _vec.clear();
+  inline typename std::vector<T>::iterator end() {
+    return _vec.end();
   }
 
   // clear
   //
   // @return an iterator pointing at the end of the <RecVec>.
-  inline typename std::vector<T>::iterator end() {
-    return _vec.end();
+  void clear() {
+    _nr_unused_cols += _nr_used_cols;
+    _nr_used_cols = 0;
+    _nr_rows = 0;
+    _vec.clear();
   }
 
  private:
