@@ -23,11 +23,21 @@
 
 #include <algorithm>
 
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
 // BooleanMat
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
+
+BooleanMat::BooleanMat(std::vector<std::vector<bool>> const& matrix)
+    : ElementWithVectorData<bool, BooleanMat>() {
+  assert(matrix.size() != 0);
+  assert(all_of(matrix.begin(), matrix.end(), [matrix](std::vector<bool> row) {
+    return row.size() == matrix.size();
+  }));
+  this->_vector->reserve(matrix.size() * matrix.size());
+  for (auto const& row : matrix) {
+    for (auto entry : row) {
+      this->_vector->push_back(entry);
+    }
+  }
+}
 
 size_t BooleanMat::complexity() const {
   return pow(this->degree(), 3);
@@ -58,6 +68,7 @@ Element* BooleanMat::identity() const {
 void BooleanMat::redefine(Element const* x, Element const* y) {
   assert(x->degree() == y->degree());
   assert(x->degree() == this->degree());
+  assert(x != this && y != this);
 
   size_t             k;
   size_t             dim = this->degree();
@@ -76,17 +87,14 @@ void BooleanMat::redefine(Element const* x, Element const* y) {
   }
 }
 
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
 // Bipartition
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
 
 std::vector<u_int32_t> Bipartition::_fuse     = std::vector<u_int32_t>();
 std::vector<u_int32_t> Bipartition::_lookup   = std::vector<u_int32_t>();
 u_int32_t              Bipartition::UNDEFINED = -1;
 
 u_int32_t Bipartition::block(size_t pos) const {
+  assert(pos < 2 * degree());
   return (*_vector)[pos];
 }
 
@@ -100,8 +108,10 @@ size_t Bipartition::degree() const {
 
 size_t Bipartition::hash_value() const {
   size_t seed = 0;
-  for (size_t i = 0; i < _vector->size(); i++) {
-    seed = ((seed * _vector->size()) + _vector->at(i));
+  size_t deg  = this->_vector->size();
+  for (auto const& val : *(this->_vector)) {
+    seed *= deg;
+    seed += val;
   }
   return seed;
 }
@@ -122,6 +132,7 @@ Element* Bipartition::identity() const {
 void Bipartition::redefine(Element const* x, Element const* y) {
   assert(x->degree() == y->degree());
   assert(x->degree() == this->degree());
+  assert(x != this && y != this);
   u_int32_t n = this->degree();
 
   Bipartition const* xx = static_cast<Bipartition const*>(x);
@@ -248,12 +259,8 @@ void Bipartition::init_trans_blocks_lookup() {
 size_t Bipartition::rank() {
   if (_rank == this->UNDEFINED) {
     init_trans_blocks_lookup();
-    _rank = 0;
-    for (auto x : _trans_blocks_lookup) {
-      if (x) {
-        _rank++;
-      }
-    }
+    _rank = std::count(
+        _trans_blocks_lookup.begin(), _trans_blocks_lookup.end(), true);
   }
   return _rank;
 }
@@ -301,13 +308,27 @@ Blocks* Bipartition::right_blocks() {
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-Semiring* MatrixOverSemiring::semiring() const {
-  return _semiring;
+MatrixOverSemiring::MatrixOverSemiring(
+    std::vector<std::vector<int64_t>> const& matrix,
+    Semiring*                                semiring)
+    : ElementWithVectorData<int64_t, MatrixOverSemiring>(),
+      _semiring(semiring) {
+  assert(matrix.size() != 0);
+  assert(
+      all_of(matrix.begin(), matrix.end(), [matrix](std::vector<int64_t> row) {
+        return row.size() == matrix.size();
+      }));
+
+  this->_vector->reserve(matrix.size() * matrix.size());
+  for (auto const& row : matrix) {
+    for (auto const& entry : row) {
+      this->_vector->push_back(entry);
+    }
+  }
 }
 
-void MatrixOverSemiring::set_semiring(Semiring* semiring) {
-  assert(_semiring == nullptr);
-  _semiring = semiring;
+Semiring* MatrixOverSemiring::semiring() const {
+  return _semiring;
 }
 
 size_t MatrixOverSemiring::complexity() const {
@@ -319,9 +340,9 @@ size_t MatrixOverSemiring::degree() const {
 }
 
 size_t MatrixOverSemiring::hash_value() const {
-  size_t seed = 0;
-  for (size_t i = 0; i < _vector->size(); i++) {
-    seed = ((seed << 4) + _vector->at(i));
+  int64_t seed = 0;
+  for (int64_t x: *_vector) {
+    seed += ((seed << 4) + x);
   }
   return seed;
 }
@@ -341,7 +362,11 @@ Element* MatrixOverSemiring::identity() const {
 Element* MatrixOverSemiring::really_copy(size_t increase_degree_by) const {
   MatrixOverSemiring* copy(static_cast<MatrixOverSemiring*>(
       ElementWithVectorData::really_copy(increase_degree_by)));
-  copy->set_semiring(_semiring);
+  // FIXME the previous line should be something like (increase_degree_by +
+  // degree()) ^ 2 - degree(), and then something more complicated should be
+  // done to actually cpy the matrix entries correctly.
+  assert(copy->_semiring == nullptr);
+  copy->_semiring = _semiring;
   return copy;
 }
 
@@ -351,6 +376,7 @@ void MatrixOverSemiring::redefine(Element const* x, Element const* y) {
 
   assert(xx->degree() == yy->degree());
   assert(xx->degree() == this->degree());
+  assert(xx != this && yy != this);
   size_t deg = this->degree();
 
   for (size_t i = 0; i < deg; i++) {
@@ -413,8 +439,8 @@ size_t PBR::degree() const {
 size_t PBR::hash_value() const {
   size_t seed = 0;
   size_t const pow  = 101;
-  for (auto row : *this->_vector) {
-    for (auto val : row) {
+  for (auto const& row : *this->_vector) {
+    for (auto const& val : row) {
       seed *= pow;
       seed += val;
     }
@@ -440,6 +466,7 @@ Element* PBR::identity() const {
 void PBR::redefine(Element const* xx, Element const* yy) {
   assert(xx->degree() == yy->degree());
   assert(xx->degree() == this->degree());
+  assert(xx != this && yy != this);
 
   PBR const* x(static_cast<PBR const*>(xx));
   PBR const* y(static_cast<PBR const*>(yy));
@@ -464,7 +491,7 @@ void PBR::redefine(Element const* xx, Element const* yy) {
   }
 
   for (size_t i = 0; i < n; i++) {
-    for (auto j : (*x)[i]) {
+    for (auto const& j : (*x)[i]) {
       if (j < n) {
         out.set(i, j, true);
       } else if (j < tmp.nr_rows() && tmp.get(j, 0)) {
@@ -487,7 +514,7 @@ void PBR::redefine(Element const* xx, Element const* yy) {
   }
 
   for (size_t i = n; i < 2 * n; i++) {
-    for (auto j : (*y)[i]) {
+    for (auto const& j : (*y)[i]) {
       if (j >= n) {
         out.set(i, j, true);
       } else if (j < tmp.nr_rows() && tmp.get(j, 0)) {
@@ -532,7 +559,7 @@ void PBR::x_dfs(u_int32_t const& n,
                 size_t const&    adj) {
   if (!x_seen[i]) {
     x_seen[i] = true;
-    for (auto j : (*x)[i]) {
+    for (auto const& j : (*x)[i]) {
       if (j < n) {
         tmp.set(adj, j + 1, true);
       } else {
@@ -549,7 +576,7 @@ void PBR::y_dfs(u_int32_t const& n,
                 size_t const&    adj) {
   if (!y_seen[i]) {
     y_seen[i] = true;
-    for (auto j : (*y)[i]) {
+    for (auto const& j : (*y)[i]) {
       if (j >= n) {
         tmp.set(adj, j + 1, true);
       } else {
