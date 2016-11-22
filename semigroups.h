@@ -357,10 +357,10 @@ class Semigroup {
   // whichever is better. This is determined by comparing <Element::complexity>
   // and the <length> of <i> and <j>.
   //
-  // For example, if the complexity of the multiplication is linear and the
-  // semigroup is a semigroup of transformations of degree 20, and the shortest
-  // paths in the left and right Cayley graphs from <i> to <j> are of length
-  // 100 and 1131, then it better to just multiply the transformation.
+  // For example, if the <Element::complexity> of the multiplication is linear
+  // and the semigroup is a semigroup of transformations of degree 20, and the
+  // shortest paths in the left and right Cayley graphs from <i> to <j> are of
+  // length 100 and 1131, then it better to just multiply the transformation.
   //
   // @return the position <pos_t> in the semigroup of the product of the <i>
   // and <j>th elements.
@@ -801,7 +801,8 @@ class Semigroup {
   // The elements the argument <coll> are copied into the semigroup, and should
   // be deleted by the caller.
 
-  void add_generators(const std::unordered_set<Element*>* coll, bool report);
+  void add_generators(const std::unordered_set<Element*>* coll,
+                      bool report = DEFAULT_REPORT_VALUE);
 
   // static
   //
