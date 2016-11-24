@@ -28,18 +28,38 @@
 #include <functional>
 #include <vector>
 
-// Blocks are stored internally as a list consisting of:
 //
-// [ nr of blocks, internal rep of blocks, transverse blocks ]
+// Class for blocks, which are signed partitions of the set *{0, ..., n}*
+// for some integer *n*. It is possible to associate to every <Bipartition>
+// a pair of <Blocks> which determine the Green's L- and R-class of the
+// <Bipartition> in the monoid of all partitions. This is the purpose of this
+// class.
 //
-// <nr of blocks> is a non-negative integer, <internal rep of blocks>[i] = j if
-// <i> belongs to the <j>th block, <transverse blocks>[j] = true if block <j> is
-// transverse and false if it is not.
+// The <Blocks> class is not currently used by the algorithms for <Semigroup>s
+// but the extra methods are used in the GAP package
+// [Semigroups package for GAP](https://gap-packages.github.io/Semigroups/).
 
 class Blocks {
  public:
+  // 0 parameters
+  //
+  // Constructs a blocks object of size 0.
   Blocks() : _blocks(nullptr), _lookup(nullptr), _nr_blocks(0), _rank(0) {}
 
+  // 2 parameters
+  // @blocks lookup table for the partition being defined.
+  // @lookup lookup table for which blocks are signed.
+  //
+  // The argument <blocks> must have length *n* for some integer *n > 0* and
+  // the property that if *i* occurs in <blocks>, then *i - 1* occurs earlier
+  // in <blocks>, *i >= 0*. None of this is checked but it probably should be.
+  // The argument <blocks> is not copied, and is deleted by the destructor of
+  // <Blocks>.
+  //
+  // The argument <lookup> must have length equal to the maximum value in
+  // <blocks>, this maximum is also the number of blocks in the partition. A
+  // value true in position *i* indicates that the *i*th block is signed and
+  // false that it is unsigned.
   Blocks(std::vector<u_int32_t>* blocks, std::vector<bool>* lookup)
       : _blocks(blocks), _lookup(lookup), _nr_blocks(), _rank(UNDEFINED) {
     assert(_blocks->size() != 0);
@@ -47,6 +67,25 @@ class Blocks {
     assert(_nr_blocks == _lookup->size());
   }
 
+  // 3 parameters
+  // @blocks     lookup table for the partition being defined.
+  // @lookup     lookup table for which blocks are signed.
+  // @_nr_blocks the number of blocks in <blocks>.
+  //
+  // The argument <blocks> must have length *n* for some integer *n > 0* and
+  // the property that if *i* occurs in <blocks>, then *i - 1* occurs earlier
+  // in <blocks>, *i >= 0*. None of this is checked but it probably should be.
+  // The argument <blocks> is not copied, and is deleted by the destructor of
+  // <Blocks>.
+  //
+  // The argument <lookup> must have length equal to the maximum value in
+  // <blocks>, this maximum is also the number of blocks in the partition. A
+  // value true in position *i* indicates that the *i*th block is signed and
+  // false that it is unsigned.
+  //
+  // This constructor is provided for the situation where the number of blocks
+  // in <blocks> is known *a priori* and so does not need to be calculated in
+  // the constructor.
   Blocks(std::vector<u_int32_t>* blocks,
          std::vector<bool>*      lookup,
          u_int32_t               nr_blocks)
@@ -60,110 +99,110 @@ class Blocks {
 
   Blocks& operator=(Blocks const&) = delete;
 
-  Blocks(Blocks const& copy)
-      : _blocks(nullptr),
-        _lookup(nullptr),
-        _nr_blocks(copy._nr_blocks),
-        _rank(copy._rank) {
-    if (copy._blocks != nullptr) {
-      assert(copy._lookup != nullptr);
-      _blocks = new std::vector<u_int32_t>(*copy._blocks);
-      _lookup = new std::vector<bool>(*copy._lookup);
-    } else {
-      assert(copy._lookup == nullptr);
-    }
-  }
+  //
+  // @copy   the blocks to copy.
+  //
+  // Copies all the information in <copy> and returns a new instance of
+  // <Blocks>.
+  Blocks(Blocks const& copy);
 
+  // Default
+  //
+  // Deletes the blocks and lookup provided at construction time.
   ~Blocks() {
     delete _blocks;
     delete _lookup;
   }
 
-  bool operator==(const Blocks& that) const {
-    if (this->_nr_blocks != that._nr_blocks) {
-      return false;
-    } else if (this->_nr_blocks == 0) {
-      return true;
-    }
-    return (*(this->_blocks) == *(that._blocks)
-            && *(this->_lookup) == *(that._lookup));
-  }
+  // const
+  // @that another blocks object.
+  //
+  // Two <Blocks> objects are equal if and only if their underlying signed
+  // partitions are equal. It is ok to compare blocks of different
+  // <Blocks::degree> with this operator.
+  bool operator==(const Blocks& that) const;
 
-  bool operator<(const Blocks& that) const {
-    if (this->degree() != that.degree()) {
-      return (this->degree() < that.degree());
-    }
-    for (size_t i = 0; i < this->degree(); i++) {
-      if (((*this->_blocks)[i] != (*that._blocks)[i])) {
-        return (*this->_blocks)[i] < (*that._blocks)[i];
-      }
-    }
-    for (size_t i = 0; i < this->nr_blocks(); i++) {
-      if (((*this->_lookup)[i] && !(*that._lookup)[i])) {
-        return true;
-      } else if ((!(*this->_lookup)[i] && (*that._lookup)[i])) {
-        return false;
-      }
-    }
-    return false;
-  }
+  // const
+  // @that another blocks object.
+  //
+  // This operator defines a total order on the set of all blocks (including
+  // those of different <Blocks::degree>).
+  bool operator<(const Blocks& that) const;
 
+  // const
+  //
+  // @return the degree of a <Blocks> object which is the size of the set on
+  // which it is a partition.
   inline u_int32_t degree() const {
-    if (_nr_blocks == 0) {
-      return 0;
-    }
-    return _blocks->size();
+    return (_nr_blocks == 0 ? 0 : _blocks->size());
   }
 
+  // const
+  // @pos an integer less than <Blocks::degree()>.
+  //
+  // This method asserts that the argument is valid.
+  //
+  // @return the index of the block containing <pos>.
   inline u_int32_t block(size_t pos) const {
     assert(pos < _blocks->size());
     return (*_blocks)[pos];
   }
 
+  // const
+  // @index an integer less than <Blocks::nr_blocks()>.
+  //
+  // This method asserts that the argument is valid.
+  //
+  // @return whether or not the block with index <index> is a transverse
+  // (signed) block or not.
   inline bool is_transverse_block(size_t index) const {
-    assert(index < _lookup->size());
+    assert(index < _nr_blocks);
     return (*_lookup)[index];
   }
 
-  inline std::vector<bool>* lookup() const {
+  // const
+  //
+  // @return a pointer to the lookup table for block indices.
+  inline const std::vector<bool>* lookup() const {
     return _lookup;
   }
 
+  // const
+  //
+  // @return the number of blocks in the <Blocks> object.
   inline u_int32_t nr_blocks() const {
     return _nr_blocks;
   }
 
-  inline u_int32_t rank() {
-    if (_rank == UNDEFINED) {
-      _rank = 0;
-      for (auto val : *_lookup) {
-        if (val)
-          _rank++;
-      }
-    }
-    return _rank;
+  // non-const
+  //
+  // @return the number of signed (transverse) blocks in the <Blocks> object.
+  u_int32_t rank();
+
+  // const
+  //
+  // @return a hash value for a <Blocks> object.
+  size_t hash_value() const;
+
+  // const
+  //
+  // This method asserts that <Blocks::degree> is not 0.
+  //
+  // @return A const_iterator pointing to the first value in the blocks lookup.
+  inline typename std::vector<u_int32_t>::const_iterator cbegin() const {
+    assert(_blocks != nullptr);
+    return _blocks->cbegin();
   }
 
-  inline size_t hash_value() const {
-    if (_nr_blocks == 0) {
-      return 0;
-    }
-    size_t seed = 0;
-    for (auto index : *_blocks) {
-      seed = ((seed * _blocks->size()) + index);
-    }
-    for (auto val : *_lookup) {
-      seed = ((seed * _blocks->size()) + val);
-    }
-    return seed;
-  }
-
-  inline typename std::vector<u_int32_t>::iterator begin() const {
-    return _blocks->begin();
-  }
-
-  inline typename std::vector<u_int32_t>::iterator end() const {
-    return _blocks->end();
+  // const
+  //
+  // This method asserts that <Blocks::degree> is not 0.
+  //
+  // @return A const_iterator referring to the past-the-end element in
+  // blocks lookup.
+  inline typename std::vector<u_int32_t>::const_iterator cend() const {
+    assert(_blocks != nullptr);
+    return _blocks->cend();
   }
 
  private:

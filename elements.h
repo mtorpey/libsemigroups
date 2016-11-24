@@ -191,7 +191,8 @@ template <typename S, class T> class ElementWithVectorData : public Element {
   //
   // Constructs an object with an uninitialised <_vector> which has size
   // <size> (defaults to 0).
-  explicit ElementWithVectorData(size_t size = 0) : _vector(new std::vector<S>()) {
+  explicit ElementWithVectorData(size_t size = 0)
+      : _vector(new std::vector<S>()) {
     _vector->resize(size);
   }
 
@@ -316,7 +317,8 @@ template <typename S, class T> class ElementWithVectorData : public Element {
 //
 // Template class for partial transformations, which is a subclass of
 // <ElementWithVectorData>. For example, <Transformation><u_int128_t> is a
-// subclass of <PartialTransformation><u_int128_t, Transformation < u_int128_t > >.
+// subclass of <PartialTransformation><u_int128_t, Transformation < u_int128_t >
+// >.
 //
 // The value of the template parameter <S> can be used to reduce the amount of
 // memory required by instances of this class.
@@ -326,7 +328,8 @@ template <typename S, class T> class ElementWithVectorData : public Element {
 //
 // A *partial transformation* *f* is just a function defined on a subset of
 // *{0, 1, ..., n - 1}* for some integer *n* called the *degree* of *f*.
-// A partial transformation is stored as a vector of the images of *{0, 1, ..., n
+// A partial transformation is stored as a vector of the images of *{0, 1, ...,
+// n
 // -1}*, i.e. *[(0)f, (1)f, ..., (n - 1)f]* where the value <UNDEFINED> is used
 // to indicate that *(i)f* is, you guessed it, undefined (i.e. not among the
 // points where *f* is defined).
@@ -424,7 +427,7 @@ class PartialTransformation : public ElementWithVectorData<S, T> {
   //
   // This value is used to indicate that a partial transformation is not
   // defined on a value. The value of this is a cast to <S> of -1.
-  static S                 UNDEFINED;
+  static S UNDEFINED;
 
  private:
   static std::vector<bool> _lookup;
@@ -602,10 +605,8 @@ class PartialPerm : public PartialTransformation<T, PartialPerm<T>> {
 
     for (size_t i = 0; i < deg_this; i++) {
       if ((*pp_this)[i] != (*pp_that)[i]) {
-        return (*pp_this)[i]
-                   == PP_UNDEFINED
-               || ((*pp_that)[i]
-                       != PP_UNDEFINED
+        return (*pp_this)[i] == PP_UNDEFINED
+               || ((*pp_that)[i] != PP_UNDEFINED
                    && (*pp_this)[i] < (*pp_that)[i]);
       }
     }
@@ -699,21 +700,21 @@ class BooleanMat : public ElementWithVectorData<bool, BooleanMat> {
   // See <Element::complexity> for more details.
   //
   // @return *n ^ 3* where *n* is the dimension of the matrix.
-  size_t   complexity() const override;
+  size_t complexity() const override;
 
   // const
   //
   // See <Element::degree> for more details.
   //
   // @return the dimension of the matrix.
-  size_t   degree() const override;
+  size_t degree() const override;
 
   // const
   //
   // See <Element::hash_value>.
   //
   // @return a hash value for a boolean matrix.
-  size_t   hash_value() const override;
+  size_t hash_value() const override;
 
   // const
   //
@@ -733,7 +734,7 @@ class BooleanMat : public ElementWithVectorData<bool, BooleanMat> {
   // Redefine this to be the product of <x> and <y>. This method asserts that
   // the dimensions of <x>, <y>, and this, are all equal, and that neither <x>
   // nor <y> equals this.
-  void     redefine(Element const* x, Element const* y) override;
+  void redefine(Element const* x, Element const* y) override;
 };
 
 //
@@ -745,7 +746,7 @@ class BooleanMat : public ElementWithVectorData<bool, BooleanMat> {
 // methods are used in the GAP package [Semigroups package for
 // GAP](https://gap-packages.github.io/Semigroups/).
 //
-// TODO more explanation
+// TODO(JDM) more explanation
 
 class Bipartition : public ElementWithVectorData<u_int32_t, Bipartition> {
  public:
@@ -765,8 +766,8 @@ class Bipartition : public ElementWithVectorData<u_int32_t, Bipartition> {
   //
   // The argument <blocks> must have length *2n* for some integer *n* and the
   // property that if *i* occurs in <blocks>, then *i - 1* occurs earlier in
-  // <blocks>. None of this is checked but it probably should be. The argument
-  // <blocks> is not copied, and should be deleted using
+  // <blocks>, *i >= 0*. None of this is checked but it probably should be. The
+  // argument <blocks> is not copied, and should be deleted using
   // <ElementWithVectorData::really_delete>
   explicit Bipartition(std::vector<u_int32_t>* blocks)
       : ElementWithVectorData<u_int32_t, Bipartition>(blocks),
@@ -785,14 +786,14 @@ class Bipartition : public ElementWithVectorData<u_int32_t, Bipartition> {
   explicit Bipartition(std::vector<u_int32_t> const& blocks)
       : Bipartition(new std::vector<u_int32_t>(blocks)) {}
 
-  // TODO another constructor that accepts an actual partition
+  // TODO(JDM) another constructor that accepts an actual partition
 
   // const
   //
   // See <Element::complexity> for more details.
   //
   // @return *2n ^ 2* where *n* is the degree of the bipartition.
-  size_t   complexity() const override;
+  size_t complexity() const override;
 
   // const
   //
@@ -800,14 +801,14 @@ class Bipartition : public ElementWithVectorData<u_int32_t, Bipartition> {
   // See <Element::degree> for more details.
   //
   // @return the degree of the bipartition.
-  size_t   degree() const override;
+  size_t degree() const override;
 
   // const
   //
   // See <Element::hash_value>.
   //
   // @return a hash value for a bipartition.
-  size_t   hash_value() const override;
+  size_t hash_value() const override;
 
   // const
   //
@@ -826,7 +827,7 @@ class Bipartition : public ElementWithVectorData<u_int32_t, Bipartition> {
   // Redefine this to be the product (as defined at the top of this page) of
   // <x> and <y>. This method asserts that the dimensions of <x>, <y>, and
   // this, are all equal, and that neither <x> nor <y> equals this.
-  void     redefine(Element const* x, Element const* y) override;
+  void redefine(Element const* x, Element const* y) override;
 
   // non-const
   //
@@ -835,7 +836,7 @@ class Bipartition : public ElementWithVectorData<u_int32_t, Bipartition> {
   //
   // This value is cached after it is first computed.
   // @return the rank of a bipartition.
-  size_t    rank();
+  size_t rank();
 
   // const
   // @pos a value between *0* and *2n - 1* where *n* is the degree
@@ -914,8 +915,7 @@ class Bipartition : public ElementWithVectorData<u_int32_t, Bipartition> {
   // asserts that either there is no existing cached value or
   // <rank> equals the existing cached value.
   inline void set_rank(size_t rank) {
-    assert(_rank == Bipartition::UNDEFINED
-           || _rank == rank);
+    assert(_rank == Bipartition::UNDEFINED || _rank == rank);
     _rank = rank;
   }
 
@@ -979,21 +979,21 @@ class MatrixOverSemiring
   // See <Element::complexity> for more details.
   //
   // @return *n ^ 3* where *n* is the dimension of the matrix.
-  size_t   complexity() const override;
+  size_t complexity() const override;
 
   // const
   //
   // See <Element::degree> for more details.
   //
   // @return the dimension of the matrix.
-  size_t   degree() const override;
+  size_t degree() const override;
 
   // const
   //
   // See <Element::hash_value>.
   //
   // @return a hash value for a matrix.
-  size_t   hash_value() const override;
+  size_t hash_value() const override;
 
   // const
   //
@@ -1052,7 +1052,7 @@ class ProjectiveMaxPlusMatrix : public MatrixOverSemiring {
   // entry in the *i*th row and *j*th column of the constructed matrix.
   explicit ProjectiveMaxPlusMatrix(std::vector<int64_t>* matrix)
       : MatrixOverSemiring(matrix, new semiring::MaxPlusSemiring()) {
-    after(); // this is to put the matrix in normal form
+    after();  // this is to put the matrix in normal form
   }
 
   // Default
@@ -1063,7 +1063,7 @@ class ProjectiveMaxPlusMatrix : public MatrixOverSemiring {
   explicit ProjectiveMaxPlusMatrix(
       std::vector<std::vector<int64_t>> const& matrix)
       : MatrixOverSemiring(matrix, new semiring::MaxPlusSemiring()) {
-    after(); // this is to put the matrix in normal form
+    after();  // this is to put the matrix in normal form
   }
 
   // const
@@ -1096,14 +1096,14 @@ class PBR : public ElementWithVectorData<std::vector<u_int32_t>, PBR> {
   // position *i* is the list of points adjacent to *i* in the PBR.
   explicit PBR(std::vector<std::vector<u_int32_t>>* vector)
       : ElementWithVectorData<std::vector<u_int32_t>, PBR>(vector) {}
-  //TODO a more convenient constructor
+  // TODO(JDM) a more convenient constructor
 
   // const
   //
   // See <Element::complexity> for more details.
   //
   // @return the two times <PBR::degree> all cubed.
-  size_t   complexity() const override;
+  size_t complexity() const override;
 
   // const
   //
@@ -1111,14 +1111,14 @@ class PBR : public ElementWithVectorData<std::vector<u_int32_t>, PBR> {
   //
   // @return half the number of points in the PBR, which is also half the
   // length of the underlying vector <ElementWithVectorData::_vector>.
-  size_t   degree() const override;
+  size_t degree() const override;
 
   // const
   //
   // See <Element::hash_value>.
   //
   // @return a hash value for a PBR.
-  size_t   hash_value() const override;
+  size_t hash_value() const override;
 
   // const
   //
@@ -1138,7 +1138,7 @@ class PBR : public ElementWithVectorData<std::vector<u_int32_t>, PBR> {
   // Redefine this to be the composition of <x> and <y>. This method asserts
   // that the degrees of <x>, <y>, and this, are all equal, and that neither
   // <x> nor <y> equals <this>.
-  void     redefine(Element const*, Element const*) override;
+  void redefine(Element const*, Element const*) override;
 
  private:
   void unite_rows(size_t const& vertex1, size_t const& vertex2);
