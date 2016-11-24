@@ -31,94 +31,163 @@
 
 #include "timer.h"
 
-#define DEFAULT_LEVEL 2
-
+//
 // This is a simple class which can be used to print information to
-// the standard output.
+// the standard output, reporting the class and function name (if set), and
+// thread_id.
+//
+// It can be used like std::cout and if its call operator is used, like:
+//
+//    reporter("bananas", 2) << "the dvd player is broken";
+//    reporter("apples") << "the window is open";
+//
+// Then it will put the following to std::cout, if the class name is not set
+// when the <Reporter> is constructed or by <Reporter::set_class_name>:
+//
+//    Thread #2: "bananas": the dvd player is broken
+//    Thread #0: "apples": the window is open
+//
+// (where 0 is the default value of for _thread_id) or if the class name has
+// been set:
+//
+//    Thread #2: class_name::bananas: the dvd player is broken
+//    Thread #0: class_name::"apples": the window is open
+//
+// If the call operator has not been called before, then the prefix is not
+// printed (and consequently the value of the thread_id is not set).
 
 class Reporter {
  public:
-  template <class T>
-  explicit Reporter(T const& obj, size_t thread_id = 0)
-      : _class(), _timer(), _thread_id(thread_id), _level(DEFAULT_LEVEL) {
-    set_class_name(obj);
-  }  // FIXME init other data members
+  // 0 parameters
+  //
+  // The default constructor. Note that by default this will output nothing,
+  // see <Reporter::set_report> and <Reporter::set_class_name>.
+  Reporter()
+      : _operator_called(false),
+        _report(false),
+        _ostream(&std::cout),
+        _thread_id(0) {}
 
-  explicit Reporter(size_t thread_id = 0)
-      : _class(), _timer(), _thread_id(thread_id), _level(DEFAULT_LEVEL) {}
+  // 1 parameter
+  // @obj the object whose name will be used by the reporter.
+  //
+  // Note that by default this will output nothing, see <Reporter::set_report>.
+  template <class T>
+  explicit Reporter(T const& obj)
+      : _operator_called(false),
+        _report(false),
+        _ostream(&std::cout),
+        _thread_id(0) {
+    set_class_name(obj);
+  }
 
   ~Reporter() {}
 
+  // non-const, template
+  // @rep a <Reporter> instance
+  // @tt  something
+  //
+  // If <rep> is set to report (see <Reporter::set_report>), then << puts tt
+  // to std::cout, otherwise this does nothing.
+  //
+  // If << is used immediately after the call operator of <rep>, then a prefix
+  // will be put to std::cout, see the top of this section.
+  //
+  // If this is used in multiple threads for the same instance of a <Reporter>
+  // then you should probably lock the reporter first, see <Reporter::lock()>.
+  // (This is not done within the method for << since if, for example, we did:
+  //
+  //    rep << "aaa" << "bbb";
+  //
+  // and
+  //
+  //    rep << "ccc" << "ddd";
+  //
+  // in separate threads then we might see:
+  //
+  //    aaacccbbbddd
+  //
+  // when we wanted to see aaabbbcccddd.
   template <class T> friend Reporter& operator<<(Reporter& rep, const T& tt) {
-    if (!rep._report) {
-      return rep;
+    rep.output_prefix();
+    if (rep._report) {
+      *(rep._ostream) << tt;
     }
-    if (rep._first_call && rep._level > 1) {
-      std::cout << "Thread #" << rep._thread_id << ": ";
-
-      if (rep._class != "") {
-        std::cout << rep._class;
-        if (rep._func != "") {
-          std::cout << "::";
-        }
-      }
-      if (rep._func != "") {
-        std::cout << rep._func << ": ";
-      }
-      rep._first_call = false;
-    }
-    std::cout << tt;
     return rep;
   }
 
+  // non-const, template
+  //
+  // This method exists to allow std::endl to be put to a <Reporter>.
   Reporter& operator<<(std::ostream& (*function)(std::ostream&) ) {
+    this->output_prefix();
     if (_report) {
-      if (_first_call && _level > 1) {
-        std::cout << "Thread #" << _thread_id << ": ";
-
-        if (_class != "") {
-          std::cout << _class;
-          if (_func != "") {
-            std::cout << "::";
-          }
-        }
-        if (_func != "") {
-          std::cout << _func << ": ";
-        }
-        _first_call = false;
-      }
-      std::cout << function;
+      *_ostream << function;
     }
     return *this;
   }
 
-  Reporter& operator()(std::string func = "", size_t thread_id = 0) {
-    _thread_id  = thread_id;
-    _func       = func;
-    _first_call = true;
+  // non-const
+  // @func the function name part of the prefix put to std::cout
+  // @thread_id the number put to std::cout to identify the thread which is
+  //            printing
+  Reporter& operator()(std::string func, size_t thread_id = 0) {
+    _thread_id       = thread_id;
+    _func            = func;
+    _operator_called = true;
     return *this;
   }
 
-  template <class T> void set_class_name(T const& obj) {
-    _class = abi::__cxa_demangle(typeid(obj).name(), 0, 0, 0);
+  Reporter& operator()(size_t thread_id = 0) {
+    _thread_id       = thread_id;
+    _operator_called = true;
+    return *this;
   }
 
+  // non-const
+  //
+  // This method locks the reporter so that if it is called by multiple threads
+  // it does not give garbled output.
   void lock() {
     if (_report) {
       _mtx.lock();
     }
   }
 
+  // non-const
+  //
+  // This method unlocks the reporter so that if it is called by multiple
+  // threads
+  // another thread will be free to put to std::cout.
   void unlock() {
     if (_report) {
       _mtx.unlock();
     }
   }
 
-  void report(bool val) {
+  // non-const
+  // @val if false, then nothing is put to std::out.
+  //
+  // This method set whether anything should be output, this is atomic.
+  void set_report(bool val) {
     _report = val;
   }
 
+  // non-const, template
+  // @obj the value to set the class name to.
+  //
+  // This method can be used to set the class name used in the output. This can
+  // be used for example when a reporter class is static, and so there may be
+  // no instance of the class to use as a parameter for the constructor.
+  template <class T> void set_class_name(T const& obj) {
+    _class = abi::__cxa_demangle(typeid(obj).name(), 0, 0, 0);
+  }
+
+  // non-const
+  //
+  // This method can be used to start a timer. The reporter is locked when the
+  // <Timer> is started but this is not thread safe, since if started in one
+  // thread and stop in another the output is not meaningful.
   void start_timer() {
     if (_report) {
       _mtx.lock();
@@ -127,6 +196,13 @@ class Reporter {
     }
   }
 
+  // non-const
+  // @prefix a string to prefix the time (defaults to "elapsed time = ")
+  //
+  // This method can be used to stop a timer, and report the amount of time.
+  // The reporter is locked when the <Timer> is stopped but this is not thread
+  // safe, since if started in one thread and stop in another the output is not
+  // meaningful.
   void stop_timer(std::string prefix = "elapsed time = ") {
     if (_report && _timer.is_running()) {
       _mtx.lock();
@@ -136,19 +212,38 @@ class Reporter {
     }
   }
 
-  void set_level(size_t level) {
-    _level = level;
+  void set_ostream(std::ostream* os) {
+    _ostream = os;
   }
 
  private:
-  std::string       _func;
+  void output_prefix() {
+    if (_report && _operator_called) {
+      *_ostream << "Thread #" << _thread_id << ": ";
+
+      if (_class != "") {
+        *_ostream << _class;
+        if (_func != "") {
+          *_ostream << "::";
+        } else {
+          *_ostream << ": ";
+        }
+      }
+      if (_func != "") {
+        *_ostream << _func << ": ";
+      }
+    }
+    _operator_called = false;
+  }
+
   std::string       _class;
+  std::string       _func;
   std::mutex        _mtx;
-  Timer             _timer;
-  size_t            _thread_id;
-  bool              _first_call;
+  bool              _operator_called;
   std::atomic<bool> _report;
-  size_t            _level;
+  std::ostream*     _ostream;
+  size_t            _thread_id;
+  Timer             _timer;
 };
 
 #endif  // SEMIGROUPSPLUSPLUS_REPORT_H_

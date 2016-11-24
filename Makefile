@@ -5,6 +5,7 @@ TODAY = $(shell date "+%Y-%m-%d-%H-%M-%S")
 
 SOURCES = $(wildcard *.cc)
 HEADERS = $(wildcard *.h)
+UTILS   = $(wildcard util/*.h)
 OBJECTS = $(SOURCES:%.cc=$(OBJ_DIR)/%.o)
 
 TEST_SOURCES = $(wildcard test/*.cc)
@@ -27,7 +28,7 @@ endif
 
 COMMON_DOC_FLAGS = --report --merge docs --output html $(SOURCES) $(HEADERS)
 
-$(OBJ_DIR)/%.o: %.cc $(HEADERS)
+$(OBJ_DIR)/%.o: %.cc $(HEADERS) $(UTILS)
 	$(CXX) $(CXXFLAGS) -c $< -o $@ $(LDFLAGS)
 
 error:

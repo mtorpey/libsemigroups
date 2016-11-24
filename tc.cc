@@ -503,8 +503,10 @@ void Congruence::trace(coset_t const& c, relation_t const& rel, bool add) {
 // Apply the TC algorithm until the coset table is complete.
 
 void Congruence::todd_coxeter(bool report) {
-  _reporter.report(report);
+  _reporter.set_report(report);
   _reporter.set_class_name(*this);
+  // Required because the _reporter is static and hence no instance exists to
+  // set the class name in the Reporter when it is instantiated.
 
   // If we have already run this before, then we are done
   if (_tc_done || _is_compressed) {
@@ -664,7 +666,7 @@ void Congruence::compress(bool report) {
 Congruence*
 parallel_todd_coxeter(Congruence* cong_t, Congruence* cong_f, bool report) {
   Reporter reporter;
-  reporter.report(report);
+  reporter.set_report(report);
   reporter.start_timer();
 
   auto go = [report](Congruence& this_cong, Congruence& that_cong) {

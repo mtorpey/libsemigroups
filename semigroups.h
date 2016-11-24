@@ -918,8 +918,6 @@ class Semigroup {
   size_t               _wordlen;
 
   Reporter      _reporter;
-
-  static uint_fast8_t IS_IDEMPOTENT;
 };
 
 #endif  // SEMIGROUPSPLUSPLUS_SEMIGROUPS_H_

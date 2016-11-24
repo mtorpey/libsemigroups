@@ -491,7 +491,7 @@ void Semigroup::enumerate(size_t limit, bool report) {
   }
   limit = std::max(limit, _nr + _batch_size);
 
-  _reporter.report(report);
+  _reporter.set_report(report);
   _reporter.start_timer();
   _reporter(__func__) << "limit = " << limit << std::endl;
 
@@ -619,7 +619,7 @@ void Semigroup::add_generators(const std::unordered_set<Element*>* coll,
 
   assert(degree() == (*coll->begin())->degree());
 
-  _reporter.report(report);
+  _reporter.set_report(report);
   _reporter.start_timer();
   _reporter(__func__);
 
@@ -894,7 +894,7 @@ void Semigroup::find_idempotents(bool report, size_t nr_threads) {
   _idempotents_found = true;
   enumerate(report);
 
-  _reporter.report(report);
+  _reporter.set_report(report);
   _reporter.start_timer();
 
   size_t sum_word_lengths = 0;
@@ -942,7 +942,7 @@ void Semigroup::find_idempotents(bool report, size_t nr_threads) {
     std::vector<std::vector<bool>> is_idempotent(nr_threads,
                                                  std::vector<bool>());
     std::vector<std::thread> threads;
-    _reporter.report(report);
+    _reporter.set_report(report);
     // TODO(JDM) use less threads if the av_load is too low
     for (size_t i = 0; i < nr_threads; i++) {
       size_t thread_load = 0;
