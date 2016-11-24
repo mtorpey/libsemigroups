@@ -145,62 +145,6 @@ namespace semiring {
     }
   };
 
-  // Finite field of prime order.
-  //
-  // This class implements finite fields of prime order only.
-  class PrimeField : public Semiring {
-   public:
-    // Default constructor.
-    // @n the size of the finite field, this must be a prime number but this
-    // is not checked.
-    explicit PrimeField(int64_t n) : Semiring(), _n(n) {}
-
-    // Semiring multiplicative identity.
-    // This method returns the multiplicative identity, or one, of the prime
-    // field.
-    //
-    // @return the integer 1.
-    int64_t one() const override {
-      return 1;
-    }
-
-    // Semiring additive identity.
-    // This method returns the additive identity, or zero, of the prime field.
-    //
-    // @return the integer 0.
-    int64_t zero() const override {
-      return 0;
-    }
-
-    // Multiplication in the prime field.
-    // @x any int64_t int
-    // @y any int64_t int
-    //
-    // @return the integer (x \* y) mod the size of the prime field.
-    int64_t prod(int64_t x, int64_t y) const override {
-      return (x * y) % _n;
-    }
-
-    // Addition in the prime field.
-    // @x any int64_t int
-    // @y any int64_t int
-    //
-    // @return the integer (x + y) mod the size of the prime field.
-    int64_t plus(int64_t x, int64_t y) const override {
-      return (x + y) % _n;
-    }
-
-    // Finite field size.
-    //
-    // @return the size of the prime field.
-    int64_t size() const {
-      return _n;
-    }
-
-   private:
-    int64_t _n;
-  };
-
   // Max-plus semiring.
   //
   // The *max-plus semiring* consists of the set of natural numbers together
