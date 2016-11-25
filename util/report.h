@@ -18,8 +18,8 @@
 
 // This file contains a class for reporting things during a computation.
 
-#ifndef SEMIGROUPSPLUSPLUS_REPORT_H_
-#define SEMIGROUPSPLUSPLUS_REPORT_H_
+#ifndef SEMIGROUPSPLUSPLUS_UTIL_REPORT_H_
+#define SEMIGROUPSPLUSPLUS_UTIL_REPORT_H_
 
 #include <assert.h>
 #include <cxxabi.h>
@@ -246,4 +246,4 @@ class Reporter {
   Timer             _timer;
 };
 
-#endif  // SEMIGROUPSPLUSPLUS_REPORT_H_
+#endif  // SEMIGROUPSPLUSPLUS_UTIL_REPORT_H_

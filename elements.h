@@ -30,8 +30,8 @@
 #include <vector>
 
 #include "blocks.h"
-#include "recvec.h"
 #include "semiring.h"
+#include "util/recvec.h"
 
 #define PP_UNDEFINED PartialTransformation<T, PartialPerm<T>>::UNDEFINED
 
@@ -50,6 +50,8 @@ using std::hash;
 
 class Element {
  public:
+  //
+  // A default destructor.
   virtual ~Element() {}
 
   // const
@@ -58,7 +60,7 @@ class Element {
   // This method checks the mathematical equality of two objects in the same
   // subclass of <Element>.
   //
-  // @return true if this equals <that>.
+  // @return true if **this** equals <that>.
   bool operator==(const Element& that) const {
     return this->equals(&that);
   }
@@ -70,7 +72,7 @@ class Element {
   // subclass of <Element> with a given <degree>. The definition of this total
   // order depends on the method for <less> in the subclass.
   //
-  // @return true if this is less than <that>.
+  // @return true if **this** is less than <that>.
   bool operator<(const Element& that) const {
     return this->less(&that);
   }
@@ -115,12 +117,14 @@ class Element {
   //
   // This method returns the multiplicative identity element for an object in a
   // subclass of <Element>. The returned identity belongs to the same subclass
-  // and has the same <degree> as <this>.
+  // and has the same <degree> as **this**.
   //
   // @return the identity element.
   virtual Element* identity() const = 0;
 
   // const
+  // @increase_deg_by increase the size of the container of the defining data
+  // of **this** by this amount.
   //
   // This method really copies an <Element>. To minimise the amount of copying
   // when <Element>s are inserted in unordered_maps and other containers,
@@ -130,8 +134,8 @@ class Element {
   //
   // See also <really_delete>.
   //
-  // @return a new element completely independent of <this>.
-  virtual Element* really_copy(size_t = 0) const = 0;
+  // @return a new element completely independent of **this**.
+  virtual Element* really_copy(size_t increase_deg_by = 0) const = 0;
 
   // non-const
   //
@@ -148,13 +152,16 @@ class Element {
   virtual void really_delete() = 0;
 
   // non-const
+  // @x an element
+  // @y an element
   //
-  // This method redefines this as the product of the two arguments to this
-  // method.
-  virtual void redefine(Element const*, Element const*) = 0;
+  // See <Element::redefine>.
+  //
+  // Redefine **this** to be the product of <x> and <y>.
+  virtual void redefine(Element const* x, Element const* y) = 0;
 
-  // FIXME hide this!
   virtual bool equals(const Element*) const = 0;
+  // FIXME hide this!
 
  private:
   virtual bool less(const Element*) const = 0;
@@ -182,11 +189,11 @@ namespace std {
 //
 // Abstract base class for elements using a vector to store their defining
 // data. For example, <Transformation><u_int128_t> is a subclass of
-// <ElementWithVectorData><u_int128_t, Transformation>.
+// <ElementWithVectorData><u_int128_t, Transformation < u_int128_t > >.
 
 template <typename S, class T> class ElementWithVectorData : public Element {
  public:
-  // Uninitialised
+  // 1 parameter (integer)
   // @size  Reserve <size> for <_vector>.
   //
   // Constructs an object with an uninitialised <_vector> which has size
@@ -196,14 +203,14 @@ template <typename S, class T> class ElementWithVectorData : public Element {
     _vector->resize(size);
   }
 
-  // Default
+  // 1 paramater (vector pointer)
   // @vector Pointer to defining data of the element.
   //
   // Constructs an object with <_vector> equal to <vector>, <vector> is not
   // copied, and should be deleted using <really_delete>.
   explicit ElementWithVectorData(std::vector<S>* vector) : _vector(vector) {}
 
-  // Default
+  // 1 parameter (vector const reference)
   // @vector Defining data of the element.
   //
   // Constructs an object with <_vector> equal to a new copy of <vector>.
@@ -227,7 +234,7 @@ template <typename S, class T> class ElementWithVectorData : public Element {
   }
 
   // const
-  // @that Compare this and <that>.
+  // @that Compare **this** and <that>.
   //
   // @return true if the underlying <_vector>s are equal and false otherwise.
   bool equals(const Element* that) const override {
@@ -235,9 +242,9 @@ template <typename S, class T> class ElementWithVectorData : public Element {
   }
 
   // const
-  // @that Compare this and <that>.
+  // @that Compare **this** and <that>.
   //
-  // @return true if the <_vector> of this is short-lex less than the <_vector>
+  // @return true if the <_vector> of **this** is short-lex less than the <_vector>
   // of <that>.
   bool less(const Element* that) const override {
     auto ewvd = static_cast<const ElementWithVectorData*>(that);
@@ -261,7 +268,7 @@ template <typename S, class T> class ElementWithVectorData : public Element {
   // there is no way of knowing how a subclass is defined by the data in
   // <_vector>.
   //
-  // @return A pointer to a copy of this.
+  // @return A pointer to a copy of **this**.
   Element* really_copy(size_t increase_deg_by) const override {
     assert(increase_deg_by == 0);
     std::vector<S>* vector(new std::vector<S>(*_vector));
@@ -307,11 +314,12 @@ template <typename S, class T> class ElementWithVectorData : public Element {
   }
 
  protected:
-  // The actual data defining this is stored in this <_vector>.
+  //
+  // The actual data defining of **this** is stored in this <_vector>.
   std::vector<S>* _vector;
 };
 
-// Abstract
+// Abstract, template
 // @S Type of image values
 // @T Subclass of <PartialTransformation>.
 //
@@ -439,7 +447,7 @@ std::vector<bool> PartialTransformation<S, T>::_lookup = std::vector<bool>();
 template <typename S, typename T>
 S PartialTransformation<S, T>::UNDEFINED = (S) -1;
 
-// Template
+// Template, non-abstract
 // @T Integer type
 //
 // Template class for transformations, which is a subclass of
@@ -479,9 +487,9 @@ class Transformation : public PartialTransformation<T, Transformation<T>> {
   // See <Element::really_copy>.
   //
   // The copy returned by this method fixes all the values between the <degree>
-  // of this and <increase_deg_by>.
+  // of **this** and <increase_deg_by>.
   //
-  // @return A pointer to a copy of this.
+  // @return A pointer to a copy of **this**.
   Element* really_copy(size_t increase_deg_by = 0) const override {
     std::vector<T>* out(new std::vector<T>(*this->_vector));
     size_t          n = this->_vector->size();
@@ -497,9 +505,9 @@ class Transformation : public PartialTransformation<T, Transformation<T>> {
   //
   // See <Element::redefine>.
   //
-  // Redefine this to be the composition of <x> and <y>. This method asserts
-  // that the degrees of <x>, <y>, and this, are all equal, and that neither
-  // <x> nor <y> equals <this>.
+  // Redefine **this** to be the composition of <x> and <y>. This method asserts
+  // that the degrees of <x>, <y>, and **this**, are all equal, and that neither
+  // <x> nor <y> equals **this**.
   void redefine(Element const* x, Element const* y) override {
     assert(x->degree() == y->degree());
     assert(x->degree() == this->degree());
@@ -513,7 +521,7 @@ class Transformation : public PartialTransformation<T, Transformation<T>> {
   }
 };
 
-// Template
+// Template, non-abstract
 // @T Integer type
 //
 // Template class for partial permutations, which is a subclass of
@@ -566,7 +574,7 @@ class PartialPerm : public PartialTransformation<T, PartialPerm<T>> {
   }
 
   // const
-  // @that Compare this and <that>.
+  // @that Compare **this** and <that>.
   //
   // See <PartialTransformation::less>.
   //
@@ -619,9 +627,9 @@ class PartialPerm : public PartialTransformation<T, PartialPerm<T>> {
   // See <Element::really_copy>.
   //
   // The copy returned by this method is undefined on all the values between
-  // the <degree> of this and <increase_deg_by>.
+  // the <degree> of **this** and <increase_deg_by>.
   //
-  // @return A pointer to a copy of this.
+  // @return A pointer to a copy of **this**.
   Element* really_copy(size_t increase_deg_by = 0) const override {
     std::vector<T>* vector(new std::vector<T>(*this->_vector));
     for (size_t i = 0; i < increase_deg_by; i++) {
@@ -636,9 +644,9 @@ class PartialPerm : public PartialTransformation<T, PartialPerm<T>> {
   //
   // See <Element::redefine>.
   //
-  // Redefine this to be the composition of <x> and <y>. This method asserts
-  // that the degrees of <x>, <y>, and this, are all equal, and that neither
-  // <x> nor <y> equals this.
+  // Redefine **this** to be the composition of <x> and <y>. This method asserts
+  // that the degrees of <x>, <y>, and **this**, are all equal, and that neither
+  // <x> nor <y> equals **this**.
   void redefine(Element const* x, Element const* y) override {
     assert(x->degree() == y->degree());
     assert(x->degree() == this->degree());
@@ -670,13 +678,13 @@ class PartialPerm : public PartialTransformation<T, PartialPerm<T>> {
   }
 };
 
-//
+// Non-abstract
 // Class for square matrices over the Boolean semiring, which is a subclass of
 // <ElementWithVectorData>.
 
 class BooleanMat : public ElementWithVectorData<bool, BooleanMat> {
  public:
-  // Default
+  // 1 parameter (vector pointer)
   // @matrix Pointer to defining data of the matrix.
   //
   // Constructs a Boolean matrix defined by <matrix>, <matrix> is not copied,
@@ -688,7 +696,7 @@ class BooleanMat : public ElementWithVectorData<bool, BooleanMat> {
   explicit BooleanMat(std::vector<bool>* matrix)
       : ElementWithVectorData<bool, BooleanMat>(matrix) {}
 
-  // Default
+  // 1 parameter (vector of vectors ref)
   // @matrix The matrix.
   //
   // Constructs a boolean matrix defined by <matrix>, which is copied into the
@@ -720,7 +728,7 @@ class BooleanMat : public ElementWithVectorData<bool, BooleanMat> {
   //
   // See <Element::identity>.
   //
-  // @return a new boolean matrix with dimension equal to that of this,
+  // @return a new boolean matrix with dimension equal to that of **this**,
   // where the main diagonal consists of the value true and every other entry
   // is false.
   Element* identity() const override;
@@ -731,13 +739,13 @@ class BooleanMat : public ElementWithVectorData<bool, BooleanMat> {
   //
   // See <Element::redefine>.
   //
-  // Redefine this to be the product of <x> and <y>. This method asserts that
-  // the dimensions of <x>, <y>, and this, are all equal, and that neither <x>
-  // nor <y> equals this.
+  // Redefine **this** to be the product of <x> and <y>. This method asserts that
+  // the dimensions of <x>, <y>, and **this**, are all equal, and that neither <x>
+  // nor <y> equals **this**.
   void redefine(Element const* x, Element const* y) override;
 };
 
-//
+// Non-abstract
 // Class for bipartitions, which are partitions of the set *{0, ..., 2n -1}*
 // for some integer *n*, which is a subclass of <ElementWithVectorData>.
 //
@@ -750,7 +758,7 @@ class BooleanMat : public ElementWithVectorData<bool, BooleanMat> {
 
 class Bipartition : public ElementWithVectorData<u_int32_t, Bipartition> {
  public:
-  // Uninitialised
+  // 1 parameters (integer)
   // @degree Degree of bipartition being constructed.
   //
   // Constructs a uninitialised bipartition of degree <degree>.
@@ -761,7 +769,7 @@ class Bipartition : public ElementWithVectorData<u_int32_t, Bipartition> {
         _trans_blocks_lookup(),
         _rank(Bipartition::UNDEFINED) {}
 
-  // Default
+  // 1 parameter (vector pointer)
   // @blocks lookup table for the bipartition being defined.
   //
   // The argument <blocks> must have length *2n* for some integer *n* and the
@@ -776,7 +784,7 @@ class Bipartition : public ElementWithVectorData<u_int32_t, Bipartition> {
         _trans_blocks_lookup(),
         _rank(Bipartition::UNDEFINED) {}
 
-  // Default
+  // 1 parameter (vector const reference)
   // @blocks lookup table for the bipartition being defined.
   //
   // The argument <blocks> must have length *2n* for some integer *n* and the
@@ -814,7 +822,7 @@ class Bipartition : public ElementWithVectorData<u_int32_t, Bipartition> {
   //
   // See <Element::identity>.
   //
-  // @return a new bipartition with degree equal to that of this,
+  // @return a new bipartition with degree equal to that of **this**,
   // whose blocks are *{i, -i}* for all *i* in *{0, ..., n - 1}*.
   Element* identity() const override;
 
@@ -826,7 +834,7 @@ class Bipartition : public ElementWithVectorData<u_int32_t, Bipartition> {
   //
   // Redefine this to be the product (as defined at the top of this page) of
   // <x> and <y>. This method asserts that the dimensions of <x>, <y>, and
-  // this, are all equal, and that neither <x> nor <y> equals this.
+  // this, are all equal, and that neither <x> nor <y> equals **this**.
   void redefine(Element const* x, Element const* y) override;
 
   // non-const
@@ -869,9 +877,9 @@ class Bipartition : public ElementWithVectorData<u_int32_t, Bipartition> {
   u_int32_t nr_right_blocks();
 
   // non-const
-  // @index index of a block in this
+  // @index index of a block in **this**
   //
-  // @return true if the <index>th block of this contains both positive and
+  // @return true if the <index>th block of **this** contains both positive and
   // negative values, and false otherwise.
   bool is_transverse_block(size_t index);
 
@@ -888,7 +896,7 @@ class Bipartition : public ElementWithVectorData<u_int32_t, Bipartition> {
   // non-const
   // @nr_blocks an integer
   //
-  // This method sets the cached value of the number of blocks of this to
+  // This method sets the cached value of the number of blocks of **this** to
   // <nr_blocks>. It asserts that either there is no existing cached value or
   // <nr_blocks> equals the existing cached value.
   inline void set_nr_blocks(size_t nr_blocks) {
@@ -899,7 +907,7 @@ class Bipartition : public ElementWithVectorData<u_int32_t, Bipartition> {
   // non-const
   // @nr_left_blocks an integer
   //
-  // This method sets the cached value of the number of left blocks of this to
+  // This method sets the cached value of the number of left blocks of **this** to
   // <nr_left_blocks>. It asserts that either there is no existing cached value
   // or <nr_left_blocks> equals the existing cached value.
   inline void set_nr_left_blocks(size_t nr_left_blocks) {
@@ -911,7 +919,7 @@ class Bipartition : public ElementWithVectorData<u_int32_t, Bipartition> {
   // non-const
   // @rank an integer
   //
-  // This method sets the cached value of the rank of this to <rank>. It
+  // This method sets the cached value of the rank of **this** to <rank>. It
   // asserts that either there is no existing cached value or
   // <rank> equals the existing cached value.
   inline void set_rank(size_t rank) {
@@ -933,10 +941,9 @@ class Bipartition : public ElementWithVectorData<u_int32_t, Bipartition> {
   static u_int32_t              UNDEFINED;
 };
 
-// Abstract
-//
-// Abstract class for square matrices over semirings, which is a subclass of
-// <ElementWithVectorData>. <See semiring::Semiring>.
+// Non-abstract
+// Class for square matrices over semirings, which is a subclass of
+// <ElementWithVectorData>. See <semiring::Semiring>.
 //
 // This class is abstract since it does not implement all methods required by
 // the <Element> class, it exists to provide common methods for its subclasses.
@@ -999,7 +1006,7 @@ class MatrixOverSemiring
   //
   // See <Element::identity>.
   //
-  // @return a new matrix with dimension equal to that of this, where the main
+  // @return a new matrix with dimension equal to that of **this**, where the main
   // diagonal consists of the value <Semiring::one> and every other entry
   // <Semiring::zero>.
   Element* identity() const override;
@@ -1013,7 +1020,7 @@ class MatrixOverSemiring
   // Note that at present this does not actually increase the degree by
   // <increase_deg_by>.
   //
-  // @return A pointer to a copy of this.
+  // @return A pointer to a copy of **this**.
   Element* really_copy(size_t increase_deg_by) const override;
 
   // non-const
@@ -1022,10 +1029,10 @@ class MatrixOverSemiring
   //
   // See <Element::redefine>.
   //
-  // Redefine this to be the product of <x> and <y>. This method asserts that
-  // the dimensions of <x>, <y>, and this, are all equal, and that neither <x>
-  // nor <y> equals this.
-  void redefine(Element const*, Element const*) override;
+  // Redefine **this** to be the product of <x> and <y>. This method asserts that
+  // the dimensions of <x>, <y>, and **this**, are all equal, and that neither <x>
+  // nor <y> equals **this**.
+  void redefine(Element const* x, Element const* y) override;
 
  private:
   // a function applied after redefinition
@@ -1034,7 +1041,7 @@ class MatrixOverSemiring
   Semiring* _semiring;
 };
 
-//
+// Non-abstract
 // Class for projective square matrices  <MaxPlusSemiring> semiring, which is
 // a subclass of <ElementWithVectorData>. See <semiring::Semiring>.
 // Two projective matrices are equal if they differ by a scalar multiple.
@@ -1078,7 +1085,7 @@ class ProjectiveMaxPlusMatrix : public MatrixOverSemiring {
   void after() override;
 };
 
-//
+// Non-abstract
 // Partitioned binary relations are a generalisation of bipartitions, which
 // were introduced by [Martin and Mazorchuk](https://arxiv.org/abs/1102.0862).
 // This is a subclass of <ElementWithVectorData>.
@@ -1092,7 +1099,7 @@ class PBR : public ElementWithVectorData<std::vector<u_int32_t>, PBR> {
   // and should be deleted using <ElementWithVectorData::really_delete>.
   //
   // The argument <vector> should be a vector of vectors of non-negative
-  // integer values of length *2 * n* for some integer *n*, the vector in
+  // integer values of length *2n* for some integer *n*, the vector in
   // position *i* is the list of points adjacent to *i* in the PBR.
   explicit PBR(std::vector<std::vector<u_int32_t>>* vector)
       : ElementWithVectorData<std::vector<u_int32_t>, PBR>(vector) {}
@@ -1135,10 +1142,10 @@ class PBR : public ElementWithVectorData<std::vector<u_int32_t>, PBR> {
   //
   // See <Element::redefine>.
   //
-  // Redefine this to be the composition of <x> and <y>. This method asserts
-  // that the degrees of <x>, <y>, and this, are all equal, and that neither
-  // <x> nor <y> equals <this>.
-  void redefine(Element const*, Element const*) override;
+  // Redefine **this** to be the composition of <x> and <y>. This method asserts
+  // that the degrees of <x>, <y>, and **this**, are all equal, and that neither
+  // <x> nor <y> equals **this**.
+  void redefine(Element const* x, Element const* y) override;
 
  private:
   void unite_rows(size_t const& vertex1, size_t const& vertex2);

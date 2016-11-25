@@ -19,7 +19,7 @@
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 
-#include "../recvec.h"
+#include "../util/recvec.h"
 
 TEST_CASE("RecVec: default constructor with 3 default args", "[constructor]") {
   RecVec<bool> rv = RecVec<bool>();

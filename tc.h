@@ -28,8 +28,8 @@
 #include <vector>
 
 #include "elements.h"
-#include "report.h"
 #include "semigroups.h"
+#include "util/report.h"
 
 class Congruence {
   enum cong_t { LEFT = 0, RIGHT = 1, TWOSIDED = 2 };
@@ -191,9 +191,6 @@ class Congruence {
   static size_t   UNDEFINED;
   static Reporter _reporter;
 };
-
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
 
 Congruence* parallel_todd_coxeter(Congruence* cong_t,
                                   Congruence* cong_f,

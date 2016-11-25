@@ -32,8 +32,8 @@
 #include <vector>
 
 #include "elements.h"
-#include "recvec.h"
-#include "report.h"
+#include "util/recvec.h"
+#include "util/report.h"
 
 //
 // This is the value used as the default value for the *report* parameter in
@@ -47,7 +47,7 @@ typedef std::vector<letter_t> word_t;
 typedef std::pair<word_t, word_t> relation_t;
 typedef RecVec<size_t> cayley_graph_t;
 
-//
+// Non-abstract
 // Class for representing a semigroup consisting of <Element>s and defined by a
 // generating set.
 

@@ -16,8 +16,8 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef SEMIGROUPSPLUSPLUS_RECVEC_H_
-#define SEMIGROUPSPLUSPLUS_RECVEC_H_
+#ifndef SEMIGROUPSPLUSPLUS_UTIL_RECVEC_H_
+#define SEMIGROUPSPLUSPLUS_UTIL_RECVEC_H_
 
 #include <assert.h>
 
@@ -295,4 +295,4 @@ template <typename T> class RecVec {
   T              _default_val;
 };
 
-#endif  // SEMIGROUPSPLUSPLUS_RECVEC_H_
+#endif  // SEMIGROUPSPLUSPLUS_UTIL_RECVEC_H_

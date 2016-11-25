@@ -16,8 +16,8 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef SEMIGROUPSPLUSPLUS_TIMER_H_
-#define SEMIGROUPSPLUSPLUS_TIMER_H_
+#ifndef SEMIGROUPSPLUSPLUS_UTIL_TIMER_H_
+#define SEMIGROUPSPLUSPLUS_UTIL_TIMER_H_
 
 #include <assert.h>
 #include <chrono>
@@ -117,4 +117,4 @@ class Timer {
   }
 };
 
-#endif  // SEMIGROUPSPLUSPLUS_TIMER_H_
+#endif  // SEMIGROUPSPLUSPLUS_UTIL_TIMER_H_

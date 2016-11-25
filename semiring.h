@@ -23,7 +23,7 @@
 
 #include <algorithm>
 
-// Namespace for containing everything related to the class <Semiring>.
+// Namespace for semirings
 
 namespace semiring {
 

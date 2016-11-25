@@ -21,7 +21,7 @@
 
 #include "catch.hpp"
 
-#include "../report.h"
+#include "../util/report.h"
 
 // Classes for testing
 class Class {
