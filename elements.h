@@ -168,22 +168,6 @@ class Element {
   virtual bool less(const Element*) const = 0;
 };
 
-// FIXME hide this!
-class myequal {
- public:
-  size_t operator()(const Element* x, const Element* y) const {
-    return x->equals(y);
-  }
-};
-
-namespace std {
-  template <> struct hash<const Element*> {
-    size_t operator()(const Element* x) const {
-      return x->hash_value();
-    }
-  };
-}
-
 // Abstract
 // @S Type of the entries in <_vector>
 // @T Subclass of <ElementWithVectorData>.
@@ -272,6 +256,7 @@ template <typename S, class T> class ElementWithVectorData : public Element {
   // @return A pointer to a copy of **this**.
   Element* really_copy(size_t increase_deg_by) const override {
     assert(increase_deg_by == 0);
+    (void)increase_deg_by;
     std::vector<S>* vector(new std::vector<S>(*_vector));
     return new T(vector);
   }

@@ -880,6 +880,19 @@ class Semigroup {
     Semigroup const& _semigroup;
   };
 
+  class myequal {
+   public:
+    size_t operator()(const Element* x, const Element* y) const {
+      return x->equals(y);
+    }
+  };
+
+  struct myhash {
+    size_t operator()(const Element* x) const {
+      return x->hash_value();
+    }
+  };
+
   size_t _batch_size;
   size_t _degree;
   std::vector<std::pair<size_t, size_t>> _duplicate_gens;
@@ -898,7 +911,7 @@ class Semigroup {
   cayley_graph_t*           _left;
   std::vector<size_t>       _length;
   std::vector<size_t>       _lenindex;
-  std::unordered_map<const Element*, size_t, hash<const Element*>, myequal>
+  std::unordered_map<const Element*, size_t, myhash, myequal>
                       _map;
   std::vector<bool>   _multiplied;
   size_t              _nr;
