@@ -880,10 +880,9 @@ class Semigroup {
     Semigroup const& _semigroup;
   };
 
-  class myequal {
-   public:
+  struct myequal {
     size_t operator()(const Element* x, const Element* y) const {
-      return x->equals(y);
+      return *x == *y;
     }
   };
 

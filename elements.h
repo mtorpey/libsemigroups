@@ -62,9 +62,7 @@ class Element {
   // subclass of <Element>.
   //
   // @return true if **this** equals <that>.
-  bool operator==(const Element& that) const {
-    return this->equals(&that);
-  }
+  virtual bool operator==(const Element& that) const = 0;
 
   // const
   // @that Another element of the same type
@@ -161,9 +159,6 @@ class Element {
   // Redefine **this** to be the product of <x> and <y>.
   virtual void redefine(Element const* x, Element const* y) = 0;
 
-  virtual bool equals(const Element*) const = 0;
-  // FIXME hide this!
-
  private:
   virtual bool less(const Element*) const = 0;
 };
@@ -222,8 +217,8 @@ template <typename S, class T> class ElementWithVectorData : public Element {
   // @that Compare **this** and <that>.
   //
   // @return true if the underlying <_vector>s are equal and false otherwise.
-  bool equals(const Element* that) const override {
-    return *(static_cast<const T*>(that)->_vector) == *(this->_vector);
+  bool operator ==(Element const& that) const override {
+    return *(static_cast<T const&>(that)._vector) == *(this->_vector);
   }
 
   // const
