@@ -16,7 +16,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include "tc.h"
+#include "cong.h"
 
 #include <algorithm>
 #include <thread>
@@ -30,10 +30,9 @@ Congruence::cong_t Congruence::type_from_string(std::string type) {
     return cong_t::LEFT;
   } else if (type == "right") {
     return cong_t::RIGHT;
-  } else if (type == "twosided") {
-    return cong_t::TWOSIDED;
   } else {
-    assert(false);
+    assert(type == "twosided");
+    return cong_t::TWOSIDED;
   }
 }
 

@@ -283,7 +283,7 @@ Semigroup::~Semigroup() {
   delete _pos_sorted;
 
   // delete those generators not stored in _elements
-  for (auto x : _duplicate_gens) {
+  for (auto& x : _duplicate_gens) {
     (*_gens)[x.first]->really_delete();
     delete (*_gens)[x.first];
   }

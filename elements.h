@@ -21,6 +21,7 @@
 #ifndef SEMIGROUPSPLUSPLUS_ELEMENTS_H_
 #define SEMIGROUPSPLUSPLUS_ELEMENTS_H_
 
+#define NDEBUG
 #include <assert.h>
 #include <math.h>
 
@@ -393,7 +394,7 @@ class PartialTransformation : public ElementWithVectorData<S, T> {
     _lookup.clear();
     _lookup.resize(degree(), false);
     size_t r = 0;
-    for (auto x : *(this->_vector)) {
+    for (auto const& x : *(this->_vector)) {
       if (x != UNDEFINED && !_lookup[x]) {
         _lookup[x] = true;
         r++;
@@ -410,7 +411,7 @@ class PartialTransformation : public ElementWithVectorData<S, T> {
   size_t hash_value() const override {
     size_t seed = 0;
     size_t deg  = this->degree();
-    for (auto val : *(this->_vector)) {
+    for (auto const& val : *(this->_vector)) {
       seed *= deg;
       seed += val;
     }
@@ -669,7 +670,7 @@ class PartialPerm : public PartialTransformation<T, PartialPerm<T>> {
   // @return the rank of a partial permutation.
   size_t crank() const {
     size_t nr_defined = 0;
-    for (auto x : *this->_vector) {
+    for (auto const& x : *this->_vector) {
       if (x != PP_UNDEFINED) {
         nr_defined++;
       }

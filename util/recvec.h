@@ -19,6 +19,7 @@
 #ifndef SEMIGROUPSPLUSPLUS_UTIL_RECVEC_H_
 #define SEMIGROUPSPLUSPLUS_UTIL_RECVEC_H_
 
+#define NDEBUG
 #include <assert.h>
 
 #include <algorithm>
