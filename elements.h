@@ -160,6 +160,7 @@ class Element {
   virtual void redefine(Element const* x, Element const* y) = 0;
 
  private:
+  // TODO(JDM) remove this
   virtual bool less(const Element*) const = 0;
 };
 
@@ -168,8 +169,8 @@ class Element {
 // @T Subclass of <ElementWithVectorData>.
 //
 // Abstract base class for elements using a vector to store their defining
-// data. For example, <Transformation><u_int128_t> is a subclass of
-// <ElementWithVectorData><u_int128_t, Transformation < u_int128_t > >.
+// data. For example, <Transformation>&lt;u_int128_t&gt; is a subclass of
+// <ElementWithVectorData>&lt;u_int128_t, Transformation&lt;u_int128_t&gt;&gt;.
 
 template <typename S, class T> class ElementWithVectorData : public Element {
  public:
@@ -305,9 +306,9 @@ template <typename S, class T> class ElementWithVectorData : public Element {
 // @T Subclass of <PartialTransformation>.
 //
 // Template class for partial transformations, which is a subclass of
-// <ElementWithVectorData>. For example, <Transformation><u_int128_t> is a
-// subclass of <PartialTransformation><u_int128_t, Transformation < u_int128_t >
-// >.
+// <ElementWithVectorData>. For example, <Transformation>&lt;u_int128_t&gt; is a
+// subclass of <PartialTransformation>&lt;u_int128_t,
+// Transformation&lt;u_int128_t&gt;&gt;.
 //
 // The value of the template parameter <S> can be used to reduce the amount of
 // memory required by instances of this class.
@@ -467,8 +468,8 @@ class Transformation : public PartialTransformation<T, Transformation<T>> {
   //
   // See <Element::really_copy>.
   //
-  // The copy returned by this method fixes all the values between the <degree>
-  // of **this** and <increase_deg_by>.
+  // The copy returned by this method fixes all the values between the
+  // <PartialTransformation::degree> of **this** and <increase_deg_by>.
   //
   // @return A pointer to a copy of **this**.
   Element* really_copy(size_t increase_deg_by = 0) const override {
@@ -557,7 +558,7 @@ class PartialPerm : public PartialTransformation<T, PartialPerm<T>> {
   // const
   // @that Compare **this** and <that>.
   //
-  // See <PartialTransformation::less>.
+  // See <ElementWithVectorData::less>.
   //
   // This defines a total order on partial permutations that is equivalent to
   // that used by GAP. It is not short-lex on the list of images, but it
@@ -608,7 +609,7 @@ class PartialPerm : public PartialTransformation<T, PartialPerm<T>> {
   // See <Element::really_copy>.
   //
   // The copy returned by this method is undefined on all the values between
-  // the <degree> of **this** and <increase_deg_by>.
+  // the <PartialTransformation::degree> of **this** and <increase_deg_by>.
   //
   // @return A pointer to a copy of **this**.
   Element* really_copy(size_t increase_deg_by = 0) const override {
@@ -959,7 +960,7 @@ class MatrixOverSemiring
 
   // const
   //
-  // @return the <Semiring> over which the matrix is defined.
+  // @return the <semiring::Semiring> over which the matrix is defined.
   Semiring* semiring() const;
 
   // const
@@ -1090,7 +1091,7 @@ class PBR : public ElementWithVectorData<std::vector<u_int32_t>, PBR> {
   //
   // See <Element::complexity> for more details.
   //
-  // @return the two times <PBR::degree> all cubed.
+  // @return the two times <ElementWithVectorData::degree> all cubed.
   size_t complexity() const override;
 
   // const

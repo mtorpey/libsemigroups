@@ -43,9 +43,20 @@
 
 static const bool DEFAULT_REPORT_VALUE = true;
 
+//
+// Type for the index of a generator of a semigroup.
 typedef size_t                letter_t;
+
+//
+// Type for a word over the generators of a semigroup.
 typedef std::vector<letter_t> word_t;
+
+//
+// Type for a pair of <word_t> (a *relation*) of a semigroup.
 typedef std::pair<word_t, word_t> relation_t;
+
+//
+// Type for a left or right Cayley graph of a semigroup.
 typedef RecVec<size_t> cayley_graph_t;
 
 // Non-abstract
@@ -59,13 +70,16 @@ class Semigroup {
 
  public:
   // deleted
+  // @semigroup const reference to a semigroup that cannot be assigned.
   //
   // The Semigroup class does not support an assignment contructor to avoid
   // accidental copying. An object in Semigroup may use many gigabytes of
   // memory and might be extremely expensive to copy. A copy constructor is
   // provided in case such a copy should be required anyway.
+  //
+  // @return nothing it is deleted.
 
-  Semigroup& operator=(Semigroup const&) = delete;
+  Semigroup& operator=(Semigroup const& semigroup) = delete;
 
   // default
   // @gens   the generators of the semigroup
@@ -122,6 +136,8 @@ class Semigroup {
             std::vector<Element*>* coll,
             bool                   report = DEFAULT_REPORT_VALUE);
 
+  //
+  // A default destructor.
   ~Semigroup();
 
   // Const methods
@@ -356,7 +372,7 @@ class Semigroup {
   // * multiplies the elements in postions <i> and <j> together;
   //
   // whichever is better. This is determined by comparing <Element::complexity>
-  // and the <length> of <i> and <j>.
+  // and the <length_const> of <i> and <j>.
   //
   // For example, if the <Element::complexity> of the multiplication is linear
   // and the semigroup is a semigroup of transformations of degree 20, and the
@@ -820,11 +836,10 @@ class Semigroup {
   static size_t LIMIT_MAX;
 
  private:
-  // Initialise the data member _sorted. We store a list of pairs
-  // <Element*, pos_t> which is sorted on the first entry using the Less
-  // subclass. This is done so that we can both get the elements in sorted
-  // order, and find the position of an element in the sorted list of
-  // elements.
+  // Initialise the data member _sorted. We store a list of pairs consisting of
+  // an <Element>* and <pos_t> which is sorted on the first entry using the
+  // Less subclass. This is done so that we can both get the elements in sorted
+  // order, and find the position of an element in the sorted list of elements.
 
   void sort_elements(bool report = DEFAULT_REPORT_VALUE);
 
@@ -868,25 +883,44 @@ class Semigroup {
                              letter_t           s,
                              std::vector<bool>& old_new,
                              pos_t              old_nr);
-  // For sorting
+
   struct Less {
+    // A constructor
+    // @semigroup should just be **this**
+    //
+    // For sorting the elements of **this**.
     explicit Less(Semigroup const& semigroup) : _semigroup(semigroup) {}
 
+    // To keep cldoc happy
+    // @x a pointer to a const Element
+    // @y a pointer to a const Element
+    //
+    // @return true or false
     bool operator()(std::pair<Element const*, size_t> const& x,
                     std::pair<Element const*, size_t> const& y) {
       return *(x.first) < *(y.first);
     }
 
+    // Reference to the semigroup
     Semigroup const& _semigroup;
   };
 
   struct myequal {
+    // To keep cldoc happy
+    // @x a pointer to a const Element
+    // @y a pointer to a const Element
+    //
+    // @return true or false
     size_t operator()(const Element* x, const Element* y) const {
       return *x == *y;
     }
   };
 
   struct myhash {
+    // To keep cldoc happy
+    // @x a pointer to a const Element
+    //
+    // @return true or false
     size_t operator()(const Element* x) const {
       return x->hash_value();
     }

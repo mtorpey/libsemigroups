@@ -49,6 +49,8 @@ namespace semiring {
 
   class Semiring {
    public:
+    //
+    // A default destructor.
     virtual ~Semiring() {}
 
     // Semiring multiplicative identity.

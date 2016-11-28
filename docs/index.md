@@ -11,12 +11,14 @@ directory, and the tests can be run by doing `make test` in the
 `semigroupsplusplus` directory.
 
 The algorithms and data structures in this version of Semigroups++ are
-based on [Algorithms for computing finite semigroups](https://www.irif.fr/~jep/PDF/Rio.pdf), 
+based on 
+[Algorithms for computing finite semigroups](https://www.irif.fr/~jep/PDF/Rio.pdf), 
 [Expository Slides](https://www.irif.fr/~jep/PDF/Exposes/StAndrews.pdf), and 
 [Semigroupe 2.01](https://www.irif.fr/~jep/Logiciels/Semigroupe2.0/semigroupe2.html) 
 by Jean-Eric Pin.
 
-The Semigroups++ library is used in the [Semigroups package for GAP](http://gap-packages.github.io/Semigroups/).
+The Semigroups++ library is used in the 
+[Semigroups package for GAP](http://gap-packages.github.io/Semigroups/).
 The development version is available on 
 [Github](https://github.com/james-d-mitchell/semigroupsplusplus).
 
@@ -36,9 +38,9 @@ progress. Missing features include those for:
 These will be included in a future version. 
 
 At present the Semigroups++ library
-seems to perform slightly worse than 
+performs less well than 
 [Semigroupe 2.01](https://www.irif.fr/~jep/Logiciels/Semigroupe2.0/semigroupe2.html)
-due in part to the fact that it is somewhat more versatile.
+due, mainly, to the way that memory is allocated. 
 
 The Semigroups++ library also has some advantages over 
 [Semigroupe 2.01](https://www.irif.fr/~jep/Logiciels/Semigroupe2.0/semigroupe2.html):
@@ -59,8 +61,9 @@ The Semigroups++ library also has some advantages over
 * it is possible to add more generators after a semigroup or monoid has been
   constructed, without lossing or having to recompute any information that was
   previously known
-* Semigroups++ contains a rudimentary implementation of the Todd-Coxeter
-  algorithm for finitely presented semigroups, which can also be used to
+* Semigroups++ contains a rudimentary implementation of the 
+  [Todd-Coxeter algorithm](https://en.wikipedia.org/wiki/Todd–Coxeter_algorithm)
+  for finitely presented semigroups, which can also be used to
   compute congruence of a (not necessarily finitely presented) semigroup or
   monoid.
 
