@@ -53,6 +53,9 @@ test: testdirs $(TEST_OBJECTS) $(OBJECTS)
 testclean:
 	rm -rf $(OBJ_DIR) test/test
 
+docclean:
+	rm -rf html
+
 testdirs:
 	mkdir -p $(OBJ_DIR)
 	mkdir -p $(TEST_OBJ_DIR)
