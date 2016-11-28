@@ -145,8 +145,8 @@ TEST_CASE("Transformation<u_int32_t>: delete/copy", "") {
 }
 
 TEST_CASE("PartialPerm<u_int16_t>: methods", "") {
-  Element* x = new PartialPerm<u_int16_t>({4, 5, 0}, {10, 0, 1});
-  Element* y = new PartialPerm<u_int16_t>({4, 5, 0}, {10, 0, 1});
+  Element* x = new PartialPerm<u_int16_t>({4, 5, 0}, {10, 0, 1}, 10);
+  Element* y = new PartialPerm<u_int16_t>({4, 5, 0}, {10, 0, 1}, 10);
   REQUIRE(*x == *y);
   x->redefine(y, y);
   PartialPerm<u_int16_t>* xx = static_cast<PartialPerm<u_int16_t>*>(x);
@@ -178,7 +178,7 @@ TEST_CASE("PartialPerm<u_int16_t>: methods", "") {
 
 TEST_CASE("PartialPerm<u_int16_t>: hash ~8ms", "") {
   Element* x =
-      new PartialPerm<u_int16_t>({0, 1, 2, 3, 5, 6, 9}, {9, 7, 3, 5, 4, 2, 1});
+      new PartialPerm<u_int16_t>({0, 1, 2, 3, 5, 6, 9}, {9, 7, 3, 5, 4, 2, 1}, 9);
   for (size_t i = 0; i < 1000000; i++) {
     x->hash_value();
   }
@@ -188,24 +188,24 @@ TEST_CASE("PartialPerm<u_int16_t>: hash ~8ms", "") {
 
 TEST_CASE("PartialPerm<u_int16_t>: delete/copy", "") {
   Element* x =
-      new PartialPerm<u_int16_t>({0, 1, 2, 3, 5, 6, 9}, {9, 7, 3, 5, 4, 2, 1});
+      new PartialPerm<u_int16_t>({0, 1, 2, 3, 5, 6, 9}, {9, 7, 3, 5, 4, 2, 1}, 9);
   Element* y = x->really_copy();
   x->really_delete();  // deletes _vector in x but not in y
   delete x;
   REQUIRE(*y == PartialPerm<u_int16_t>({0, 1, 2, 3, 5, 6, 9},
-                                       {9, 7, 3, 5, 4, 2, 1}));
+                                       {9, 7, 3, 5, 4, 2, 1}, 9));
   PartialPerm<u_int16_t> yy = *static_cast<PartialPerm<u_int16_t>*>(y);
   REQUIRE(yy == *y);
   PartialPerm<u_int16_t> zz(yy);
   delete y;  // does not delete the _vector in y, yy, or zz
   REQUIRE(zz == PartialPerm<u_int16_t>({0, 1, 2, 3, 5, 6, 9},
-                                       {9, 7, 3, 5, 4, 2, 1}));
+                                       {9, 7, 3, 5, 4, 2, 1}, 9));
   zz.really_delete();
 }
 
 TEST_CASE("PartialPerm<u_int32_t>: methods", "") {
-  Element* x = new PartialPerm<u_int32_t>({4, 5, 0}, {10, 0, 1});
-  Element* y = new PartialPerm<u_int32_t>({4, 5, 0}, {10, 0, 1});
+  Element* x = new PartialPerm<u_int32_t>({4, 5, 0}, {10, 0, 1}, 10);
+  Element* y = new PartialPerm<u_int32_t>({4, 5, 0}, {10, 0, 1}, 10);
   REQUIRE(*x == *y);
   x->redefine(y, y);
   PartialPerm<u_int32_t>* xx = static_cast<PartialPerm<u_int32_t>*>(x);
@@ -237,7 +237,7 @@ TEST_CASE("PartialPerm<u_int32_t>: methods", "") {
 
 TEST_CASE("PartialPerm<u_int32_t>: hash ~8ms", "") {
   Element* x =
-      new PartialPerm<u_int32_t>({0, 1, 2, 3, 5, 6, 9}, {9, 7, 3, 5, 4, 2, 1});
+      new PartialPerm<u_int32_t>({0, 1, 2, 3, 5, 6, 9}, {9, 7, 3, 5, 4, 2, 1}, 9);
   for (size_t i = 0; i < 1000000; i++) {
     x->hash_value();
   }
@@ -247,18 +247,18 @@ TEST_CASE("PartialPerm<u_int32_t>: hash ~8ms", "") {
 
 TEST_CASE("PartialPerm<u_int32_t>: delete/copy", "") {
   Element* x =
-      new PartialPerm<u_int32_t>({0, 1, 2, 3, 5, 6, 9}, {9, 7, 3, 5, 4, 2, 1});
+      new PartialPerm<u_int32_t>({0, 1, 2, 3, 5, 6, 9}, {9, 7, 3, 5, 4, 2, 1}, 9);
   Element* y = x->really_copy();
   x->really_delete();  // deletes _vector in x but not in y
   delete x;
   REQUIRE(*y == PartialPerm<u_int32_t>({0, 1, 2, 3, 5, 6, 9},
-                                       {9, 7, 3, 5, 4, 2, 1}));
+                                       {9, 7, 3, 5, 4, 2, 1}, 9));
   PartialPerm<u_int32_t> yy = *static_cast<PartialPerm<u_int32_t>*>(y);
   REQUIRE(yy == *y);
   PartialPerm<u_int32_t> zz(yy);
   delete y;  // does not delete the _vector in y, yy, or zz
   REQUIRE(zz == PartialPerm<u_int32_t>({0, 1, 2, 3, 5, 6, 9},
-                                       {9, 7, 3, 5, 4, 2, 1}));
+                                       {9, 7, 3, 5, 4, 2, 1}, 9));
   zz.really_delete();
 }
 

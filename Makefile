@@ -13,11 +13,10 @@ TEST_OBJECTS = $(TEST_SOURCES:%.cc=$(OBJ_DIR)/%.o)
 
 CXXFLAGS = -I. -Wall -Wextra -pedantic -Wno-c++11-extensions -std=c++11
 
-ifdef COVERAGE
-  CXXFLAGS += -O0 -g --coverage
-  LDFLAGS += -O0 -g --coverage
+ifdef DEBUG 
+  CXXFLAGS += -O0 -g
 else
-  CXXFLAGS += -O2
+  CXXFLAGS += -O2 -g
 endif 
 
 ifneq ($(CXX),clang++)
@@ -27,9 +26,6 @@ ifneq ($(CXX),clang++)
 endif
 
 COMMON_DOC_FLAGS = --report --merge docs --output html $(SOURCES) $(HEADERS)
-
-$(OBJ_DIR)/%.o: %.cc $(HEADERS) $(UTILS)
-	$(CXX) $(CXXFLAGS) -c $< -o $@ $(LDFLAGS)
 
 error:
 	@echo "Please choose one of the following: doc, serve, test,"
@@ -50,6 +46,11 @@ test: testdirs $(TEST_OBJECTS) $(OBJECTS)
 	@echo "Running the tests ("$(LOG_DIR)/$(TODAY).log") . . ."; \
 	test/test -d yes --order lex --force-colour | tee -a $(LOG_DIR)/$(TODAY).log
 
+testdebug: $(TEST_OBJECTS) $(OBJECTS)
+	# only make testclean if necessary
+	make testclean
+	make test DEBUG=true
+
 testclean:
 	rm -rf $(OBJ_DIR) test/test
 
@@ -61,18 +62,7 @@ testdirs:
 	mkdir -p $(TEST_OBJ_DIR)
 	mkdir -p $(LOG_DIR)
 
-#testcov: $(TEST_OBJECTS) $(OBJECTS)
-#	@echo "This does not work correctly!"; \
-#	# TODO only make test/cov/clean if necessary
-#	make testcovclean
-#	make testclean
-#	make test COVERAGE=true
-#	lcov --no-external --capture --base-directory /Users/jdm/semigroups/src/semigroupsplusplus --directory /Users/jdm/semigroups/src/semigroupsplusplus/test --output-file test/lcov.info
-#	genhtml test/lcov.info --output-directory test/lcov-out
-#	open test/lcov-out/index.html
-#
-#testcovclean:
-#	rm -rf test/lcov-out lcov.info
-#	rm -f $(OBJ_DIR)/*.gcda $(OBJ_DIR)/*.gcno
+$(OBJ_DIR)/%.o: %.cc $(HEADERS) $(UTILS)
+	$(CXX) $(CXXFLAGS) -c $< -o $@ $(LDFLAGS)
 
 .PHONY: test dirs

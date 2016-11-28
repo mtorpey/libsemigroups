@@ -116,7 +116,7 @@ Semigroup::Semigroup(const Semigroup& copy)
       _final(copy._final),
       _first(copy._first),
       _found_one(copy._found_one),
-      _gens(),
+      _gens(new std::vector<Element*>()),
       _genslookup(copy._genslookup),
       _id(copy._id->really_copy()),
       _idempotents(copy._idempotents),
@@ -149,7 +149,7 @@ Semigroup::Semigroup(const Semigroup& copy)
   _map.reserve(_nr);
   _tmp_product = copy._id->really_copy();
 
-  for (Element const* x : *_gens) {
+  for (Element const* x : *(copy._gens)) {
     _gens->push_back(x->really_copy());
   }
 
@@ -175,7 +175,7 @@ Semigroup::Semigroup(const Semigroup&       copy,
       _gens(new std::vector<Element*>()),
       _genslookup(copy._genslookup),
       _idempotents(copy._idempotents),
-      _idempotents_found(false),
+      _idempotents_found(copy._idempotents_found),
       _idempotents_start_pos(copy._idempotents_start_pos),
       _is_idempotent(copy._is_idempotent),
       _left(new cayley_graph_t(*copy._left)),
@@ -210,13 +210,9 @@ Semigroup::Semigroup(const Semigroup&       copy,
 
   std::unordered_set<Element*>* new_gens = new std::unordered_set<Element*>();
 
-#ifndef NDEBUG
-  size_t deg = (*coll)[0]->degree();
-#endif
-
   // remove duplicate generators
   for (Element const* x : *coll) {
-    assert(x->degree() == deg);
+    assert(x->degree() == (*coll)[0]->degree());
     new_gens->insert(x->really_copy());
     // copy here so that after add_generators, the semigroup is responsible
     // for the destruction of gens.
@@ -263,6 +259,7 @@ Semigroup::Semigroup(const Semigroup&       copy,
 
   add_generators(new_gens, report);
   for (Element* x : *new_gens) {
+    // FIXME x->really_delete(); this should be the same as in the destructor
     delete x;
   }
   delete new_gens;
@@ -383,7 +380,7 @@ Semigroup::pos_t Semigroup::position(Element* x, bool report) {
   }
 }
 
-size_t Semigroup::position_sorted(Element* x, bool report) {
+size_t Semigroup::sorted_position(Element* x, bool report) {
   pos_t pos = position(x, report);
 
   if (pos == UNDEFINED) {

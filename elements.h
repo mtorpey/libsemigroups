@@ -36,6 +36,15 @@
 
 #define PP_UNDEFINED PartialTransformation<T, PartialPerm<T>>::UNDEFINED
 
+template <typename T> static inline void print_vector(std::vector<T> vec) {
+  std::cout << "{";
+  for (T const& x : vec) {
+    std::cout << x << ", ";
+  }
+  std::cout << "}\n";
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 // Namespaces
@@ -296,6 +305,10 @@ template <typename S, class T> class ElementWithVectorData : public Element {
     return _vector->cend();
   }
 
+  void print() const {
+    print_vector(*_vector);
+  }
+
  protected:
   //
   // The actual data defining of **this** is stored in this <_vector>.
@@ -483,8 +496,8 @@ class Transformation : public PartialTransformation<T, Transformation<T>> {
   }
 
   // non-const
-  // @x transformation
-  // @y transformation
+  // @x partial transformation
+  // @y partial transformation
   //
   // See <Element::redefine>.
   //
@@ -542,15 +555,21 @@ class PartialPerm : public PartialTransformation<T, PartialPerm<T>> {
   //
   // @dom The domain
   // @ran The range
+  // @deg The intended degree of the partial perm. This must be at least the
+  // maximum element occurring in <dom> or <ran>.
   //
   // Constructs a partial perm such that (<dom>[i])f = <ran>[i] and which is
   // undefined on every other value.
-  explicit PartialPerm(std::vector<T> const& dom, std::vector<T> const& ran)
+  explicit PartialPerm(std::vector<T> const& dom,
+                       std::vector<T> const& ran,
+                       size_t                deg)
       : PartialTransformation<T, PartialPerm<T>>() {
     assert(dom.size() == ran.size());
-    size_t deg   = *std::max_element(dom.begin(), dom.end());
-    size_t codeg = *std::max_element(ran.begin(), ran.end());
-    this->_vector->resize((deg > codeg ? deg : codeg) + 1, PP_UNDEFINED);
+    assert(deg >= *std::max_element(dom.begin(), dom.end()));
+    assert(codeg >= *std::max_element(ran.begin(), ran.end()));
+    assert(deg >= (deg > codeg ? deg : codeg));
+
+    this->_vector->resize(deg + 1, PP_UNDEFINED);
     for (size_t i = 0; i < dom.size(); i++) {
       (*this->_vector)[dom[i]] = ran[i];
     }
@@ -561,11 +580,14 @@ class PartialPerm : public PartialTransformation<T, PartialPerm<T>> {
   //
   // See <ElementWithVectorData::less>.
   //
-  // This defines a total order on partial permutations that is equivalent to
-  // that used by GAP. It is not short-lex on the list of images, but it
+  // This defines a total order on partial permutations that is
+  // equivalent to
+  // that used by GAP. It is not short-lex on the list of images, but
+  // it
   // probably should be.
   //
-  // @return true if something complicated is true and false if it is not.
+  // @return true if something complicated is true and false if it is
+  // not.
   bool less(const Element* that) const override {
     auto pp_this = static_cast<const PartialPerm<T>*>(this);
     auto pp_that = static_cast<const PartialPerm<T>*>(that);
@@ -993,8 +1015,7 @@ class MatrixOverSemiring
   // See <Element::identity>.
   //
   // @return a new matrix with dimension equal to that of **this**, where the
-  // main
-  // diagonal consists of the value <Semiring::one> and every other entry
+  // main diagonal consists of the value <Semiring::one> and every other entry
   // <Semiring::zero>.
   Element* identity() const override;
 
@@ -1017,10 +1038,8 @@ class MatrixOverSemiring
   // See <Element::redefine>.
   //
   // Redefine **this** to be the product of <x> and <y>. This method asserts
-  // that
-  // the dimensions of <x>, <y>, and **this**, are all equal, and that neither
-  // <x>
-  // nor <y> equals **this**.
+  // that the dimensions of <x>, <y>, and **this**, are all equal, and that
+  // neither <x> nor <y> equals **this**.
   void redefine(Element const* x, Element const* y) override;
 
  private:

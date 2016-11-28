@@ -412,22 +412,32 @@ TEST_CASE("Reporter: report, 0 parameters, threads", "") {
   Reporter            r;
   r.set_report(true);
   r.set_ostream(os);
+  size_t winner = -1;
 
-  auto func = [&r](size_t wait_for_ms, size_t thread_id) {
+  auto func = [&winner, &r](size_t wait_for_ms, size_t thread_id) {
     std::this_thread::sleep_for(std::chrono::milliseconds(wait_for_ms));
     r.lock();
     r("func", thread_id) << "Something!";
+    if (winner == static_cast<size_t>(-1)) {
+      winner = thread_id;
+    }
     r.unlock();
   };
 
-  std::thread t0(func, 10, 0);
-  std::thread t1(func, 12, 1);
+  std::thread t0(func, 1, 0);
+  std::thread t1(func, 1, 1);
 
   t0.join();
   t1.join();
 
-  REQUIRE(os->str()
-          == "Thread #0: func: Something!Thread #1: func: Something!");
+  std::string expected;
+  if (winner == 0) {
+    expected = "Thread #0: func: Something!Thread #1: func: Something!";
+  } else {
+    expected = "Thread #1: func: Something!Thread #0: func: Something!";
+  }
+
+  REQUIRE(os->str() == expected);
   delete os;
 }
 
@@ -446,7 +456,7 @@ TEST_CASE("Reporter: report, 1 parameter, threads", "") {
   };
 
   std::thread t0(func, 10, 0);
-  std::thread t1(func, 12, 1);
+  std::thread t1(func, 20, 1);
 
   t0.join();
   t1.join();

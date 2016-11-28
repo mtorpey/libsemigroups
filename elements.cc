@@ -377,6 +377,8 @@ void MatrixOverSemiring::redefine(Element const* x, Element const* y) {
   assert(xx->degree() == yy->degree());
   assert(xx->degree() == this->degree());
   assert(xx != this && yy != this);
+  assert(xx->semiring() == yy->semiring()
+         && xx->semiring() == this->semiring());
   size_t deg = this->degree();
 
   for (size_t i = 0; i < deg; i++) {
