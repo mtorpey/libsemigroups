@@ -16,8 +16,14 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef SEMIGROUPSPLUSPLUS_TC_H_
-#define SEMIGROUPSPLUSPLUS_TC_H_
+#ifndef SEMIGROUPSPLUSPLUS_CONG_H_
+#define SEMIGROUPSPLUSPLUS_CONG_H_
+
+// TODO: the congruence object and the Todd-Coxeter data structures should be
+// separated (i.e. all the Todd-Coxeter data stuff should go into a member
+// class of Congruence). This will mean that we can run multiple instance of
+// Todd-Coxeter within a single Congruence object, and also things like small
+// overlap and Knuth-Bendix.
 
 #include <atomic>
 #include <forward_list>
@@ -31,19 +37,80 @@
 #include "semigroups.h"
 #include "util/report.h"
 
+// Non-abstract
+// Class for representing a congruence on a semigroup defined either as an
+// instance of a <Semigroup> object or as a finitely presented semigroup
+// defined by generators and relations.
+//
+// This class and its implemented methods are rather rudimentary in the current
+// version of Semigroups++.
+//
+// The word "coset" is used throughout this section to mean "congruence class".
+
 class Congruence {
-  enum cong_t { LEFT = 0, RIGHT = 1, TWOSIDED = 2 };
+ private:
+  // The different types of congruence.
+  enum cong_t {
+    // Left congruence
+    LEFT = 0,
+    // Right congruence
+    RIGHT = 1,
+    // 2-sided congruence
+    TWOSIDED = 2 };
 
   typedef size_t  coset_t;
   typedef int64_t signed_coset_t;
 
  public:
+  // 5 parameters (for finitely presented semigroup)
+  // @type string describing the type of congruence (left/right/twosided)
+  // @nrgens the number of generators
+  // @relations a vector of <relation_t>
+  // @extra     a vector of extra <relation_t> (such as those used to define a
+  // congruence on a finitely presented semigroup)
+  // @thread_id an integer identifying the thread which is instantiating the
+  // congruence (defaults to 0).
+  //
+  // This constructor returns an instance of a congruence object whose type is
+  // described by the string <type>. The congruence is defined over the
+  // semigroup defined by the generators <nrgens> and relations <relations> and
+  // is the least congruence containing the generating pairs in <extra>.
+  //
+  // Note that cldoc mangles the types of the parameters <relations> and
+  // <extra>, which are both **std::vector&lt;&lt;relation_t&gt;&gt;**.
   Congruence(std::string                    type,
              size_t                         nrgens,
              std::vector<relation_t> const& relations,
              std::vector<relation_t> const& extra,
              size_t                         thread_id = 0);
 
+  // 6 parameters (for a <Semigroup>)
+  // @type      string describing the type of congruence (left/right/twosided)
+  // @semigroup pointer to a <Semigroup>.
+  // @extra     a vector of <relation_t> used to define a congruence on
+  //            <semigroup>.
+  // @prefill   prefill the coset table (for Todd-Coxeter) with the left or
+  //            right Cayley graph of <semigroup>.
+  // @report report during enumeration of <semigroup>, if any (defaults to
+  //         <DEFAULT_REPORT_VALUE>)
+  // @thread_id an integer identifying the thread which is instantiating the
+  // congruence (defaults to 0).
+  //
+  // This constructor returns an instance of a congruence object whose type is
+  // described by the string <type>. The congruence is defined over the
+  // semigroup <semigroup> and is the least congruence containing the
+  // generating pairs in <extra>.
+  //
+  // If the value <prefill> is true, then the left or right Cayley graph of
+  // <semigroup> is used to completely prefill the coset table in
+  // <todd_coxeter>, so that only coincidences are processed during
+  // <todd_coxeter>. This can be faster than simply running <todd_coxeter> on
+  // the presentation defining <semigroup> in the case that the congruence
+  // being defined has lots of equivalence classes when compared to the size of
+  // <semigroup> (for some definition of "lots").
+  //
+  // Note that cldoc mangles the types of the parameter <extra>, which is
+  // **std::vector&lt;&lt;relation_t&gt;&gt;**.
   Congruence(std::string                    type,
              Semigroup*                     semigroup,
              std::vector<relation_t> const& extra,
@@ -51,22 +118,81 @@ class Congruence {
              bool                           report,
              size_t                         thread_id = 0);
 
+  // 5 parameters (for a coset table)
+  // @type    string describing the type of congruence (left/right/twosided)
+  // @nrgens  the number of generators
+  // @extra   a vector of <relation_t> used to define the congruence being
+  //          constructed.
+  // @prefill a prefilled coset table (for Todd-Coxeter).
+  // @thread_id an integer identifying the thread which is instantiating the
+  // congruence (defaults to 0).
+  //
+  // This constructor returns an instance of a congruence object whose type is
+  // described by the string <type>. The congruence is the least congruence
+  // containing the generating pairs in <extra>, and it is defined on the
+  // semigroup whose right or left Cayley graph is described by <prefill>.
+  //
+  // Note that cldoc mangles the types of the parameters <extra>, which is
+  // **std::vector&lt;&lt;relation_t&gt;&gt;**.
   Congruence(std::string                    type,
              size_t                         nrgens,
-             std::vector<relation_t> const& relations,
              std::vector<relation_t> const& extra,
              RecVec<coset_t>&               prefill,
              size_t                         thread_id = 0);
 
+  //
+  // A default destructor.
   ~Congruence() {}
 
+  // const
+  //
+  // @return true if the method <todd_coxeter> has been run until its
+  // conclusion, and false if it has not.
   bool is_tc_done() const {
     return _tc_done;
   }
 
+  // non-const
+  // @report report during the algorithm, if any (defaults to
+  //         <DEFAULT_REPORT_VALUE>)
+  //
+  // This runs the
+  // [Todd-Coxeter algorithm](https://en.wikipedia.org/wiki/Todd–Coxeter_algorithm)
+  // on **this**. Note that this may never terminate, but can be killed using
+  // <kill>. The implementation is based on one by Goetz Pfeiffer in GAP.
   void todd_coxeter(bool report = true);
-  coset_t word_to_coset(word_t w, bool report = true);
+
+
+  // non-const
+  // @word   a <word_t> in the (indices of) the generators of the semigroup
+  //         that **this** is defined over.
+  // @report report during <todd_coxeter>, if any (defaults to
+  //         <DEFAULT_REPORT_VALUE>)
+  //
+  // This method is non-const because it will call <todd_coxeter> if it has not
+  // already been run to completion.
+  //
+  // @return the index of the coset corresponding to <word>.
+  coset_t word_to_coset(word_t word, bool report = true);
+
+  // non-const
+  // @report report during <todd_coxeter>, if any (defaults to
+  //         <DEFAULT_REPORT_VALUE>)
+  //
+  // This method compresses the coset table used by <todd_coxeter>.
+  //
+  // This method is non-const because it will call <todd_coxeter> if it has not
+  // already been run to completion.
   void compress(bool report = true);
+
+  // non-const
+  // @report report during <todd_coxeter>, if any (defaults to
+  //         <DEFAULT_REPORT_VALUE>)
+  //
+  // This method is non-const because it will call <todd_coxeter> if it has not
+  // already been run to completion.
+  //
+  // @return the number of congruences classes (or cosets) of the congruence.
 
   size_t nr_classes(bool report = true) {
     if (!is_tc_done()) {
@@ -75,6 +201,11 @@ class Congruence {
     return _active - 1;
   }
 
+  // non-const
+  //
+  // This method can be used to terminate <todd_coxeter> if it is running for
+  // too long, or if an instance running in another thread concludes before
+  // this.
   void kill() {
     _killed = true;
   }
@@ -95,7 +226,6 @@ class Congruence {
 
   Congruence(cong_t                         type,
              size_t                         nrgens,
-             std::vector<relation_t> const& relations,
              std::vector<relation_t> const& extra,
              RecVec<coset_t>&               prefill,
              size_t                         thread_id = 0);
@@ -130,13 +260,13 @@ class Congruence {
   //
   // We use these two arrays to simulate a doubly-linked list of active cosets
   // (the "active list") with deleted cosets attached to the end (the "free
-  // list").  If <c> is an active coset:
-  //   _forwd[c] is the coset that comes after <c> in the list.
-  //   _bckwd[c] is the coset that comes before <c> in the list.
-  // If <c> is a free coset (has been deleted) the backward reference is not
-  // needed, and so instead, _bckwd[c] is set to the coset <c> was identified
+  // list").  If c is an active coset:
+  //   _forwd[c] is the coset that comes after c in the list.
+  //   _bckwd[c] is the coset that comes before c in the list.
+  // If c is a free coset (has been deleted) the backward reference is not
+  // needed, and so instead, _bckwd[c] is set to the coset c was identified
   // with.  To indicate this alternative use of the list, the entry is negated
-  // (_backwd[c] == -3 indicates that <c> was identified with coset 3).
+  // (_backwd[c] == -3 indicates that c was identified with coset 3).
   //
   std::vector<coset_t>        _forwd;
   std::vector<signed_coset_t> _bckwd;
@@ -192,8 +322,27 @@ class Congruence {
   static Reporter _reporter;
 };
 
-Congruence* parallel_todd_coxeter(Congruence* cong_t,
-                                  Congruence* cong_f,
+// Competitive Todd Coxeter
+// @cong1 the first congruence to run <Congruence::todd_coxeter>
+// @cong2 the second congruence to run <Congruence::todd_coxeter>
+// @report report during <Congruence::todd_coxeter> and this function itself,
+// if any (defaults to <DEFAULT_REPORT_VALUE>)
+//
+// This function can be used to run <Congruence::todd_coxeter> in parallel on
+// two congruences. For example, if we want to compute a congruence on a
+// <Semigroup> object, then we may want to run the Todd-Coxeter algorithm on an
+// instance of <Congruence> where the coset table is prefilled with the left or
+// right Cayley graph (where appropriate), and on another instance where the
+// coset table is not prefilled.
+//
+// When the <Congruence::todd_coxeter> method of one <Congruence> object
+// terminates it kills the other method, <Congruence::kill>.
+//
+// @return either <cong1> or <cong2> depending on which of them the
+// <Congruence::todd_coxeter> method finished first.
+
+Congruence* parallel_todd_coxeter(Congruence* cong1,
+                                  Congruence* cong2,
                                   bool        report = true);
 
-#endif  // SEMIGROUPSPLUSPLUS_TC_H_
+#endif  // SEMIGROUPSPLUSPLUS_CONG_H_

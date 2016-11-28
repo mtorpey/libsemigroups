@@ -105,24 +105,21 @@ Congruence::Congruence(cong_t type,
 
 Congruence::Congruence(std::string                    type,
                        size_t                         nrgens,
-                       std::vector<relation_t> const& relations,
                        std::vector<relation_t> const& extra,
                        RecVec<coset_t>&               prefill,
                        size_t                         thread_id)
     : Congruence(type_from_string(type),
                  nrgens,
-                 relations,
                  extra,
                  prefill,
                  thread_id) {}
 
 Congruence::Congruence(cong_t                         type,
                        size_t                         nrgens,
-                       std::vector<relation_t> const& relations,
                        std::vector<relation_t> const& extra,
                        RecVec<coset_t>&               prefill,
                        size_t                         thread_id)
-    : Congruence(type, nrgens, relations, extra, thread_id) {
+    : Congruence(type, nrgens, std::vector<relation_t>(), extra, thread_id) {
   // TODO(JDM) check table is valid
   assert(prefill.nr_cols() == _nrgens);
   assert(prefill.nr_rows() > 0);
@@ -608,7 +605,6 @@ size_t Congruence::word_to_coset(word_t w, bool report) {
   }
   return c;
 }
-
 
 // compress the table
 
