@@ -341,7 +341,7 @@ size_t MatrixOverSemiring::degree() const {
 
 size_t MatrixOverSemiring::hash_value() const {
   int64_t seed = 0;
-  for (int64_t x: *_vector) {
+  for (int64_t x : *_vector) {
     seed += ((seed << 4) + x);
   }
   return seed;
@@ -437,7 +437,7 @@ size_t PBR::degree() const {
 }
 
 size_t PBR::hash_value() const {
-  size_t seed = 0;
+  size_t       seed = 0;
   size_t const pow  = 101;
   for (auto const& row : *this->_vector) {
     for (auto const& val : row) {

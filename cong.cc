@@ -41,14 +41,10 @@ Congruence::Congruence(std::string                    type,
                        std::vector<relation_t> const& relations,
                        std::vector<relation_t> const& extra,
                        size_t                         thread_id)
-    : Congruence(type_from_string(type),
-                 nrgens,
-                 relations,
-                 extra,
-                 thread_id) {}
+    : Congruence(type_from_string(type), nrgens, relations, extra, thread_id) {}
 
-Congruence::Congruence(cong_t type,
-                       size_t nrgens,
+Congruence::Congruence(cong_t                         type,
+                       size_t                         nrgens,
                        std::vector<relation_t> const& relations,
                        std::vector<relation_t> const& extra,
                        size_t                         thread_id)
@@ -108,11 +104,7 @@ Congruence::Congruence(std::string                    type,
                        std::vector<relation_t> const& extra,
                        RecVec<coset_t>&               prefill,
                        size_t                         thread_id)
-    : Congruence(type_from_string(type),
-                 nrgens,
-                 extra,
-                 prefill,
-                 thread_id) {}
+    : Congruence(type_from_string(type), nrgens, extra, prefill, thread_id) {}
 
 Congruence::Congruence(cong_t                         type,
                        size_t                         nrgens,
@@ -213,7 +205,7 @@ Congruence::Congruence(cong_t                         type,
 }
 
 void Congruence::init_after_prefill() {
-  _active = _table.nr_rows();
+  _active   = _table.nr_rows();
   _id_coset = 0;
 
   _forwd.reserve(_active);
@@ -450,7 +442,7 @@ void Congruence::trace(coset_t const& c, relation_t const& rel, bool add) {
     if ((_defined - _active) - _cosets_killed < 100) {
       _stop_packing = true;
     }
-    _next_report  = 0;
+    _next_report   = 0;
     _cosets_killed = _defined - _active;
   }
 

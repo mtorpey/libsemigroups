@@ -218,14 +218,15 @@ template <typename S, class T> class ElementWithVectorData : public Element {
   // @that Compare **this** and <that>.
   //
   // @return true if the underlying <_vector>s are equal and false otherwise.
-  bool operator ==(Element const& that) const override {
+  bool operator==(Element const& that) const override {
     return *(static_cast<T const&>(that)._vector) == *(this->_vector);
   }
 
   // const
   // @that Compare **this** and <that>.
   //
-  // @return true if the <_vector> of **this** is short-lex less than the <_vector>
+  // @return true if the <_vector> of **this** is short-lex less than the
+  // <_vector>
   // of <that>.
   bool less(const Element* that) const override {
     auto ewvd = static_cast<const ElementWithVectorData*>(that);
@@ -252,7 +253,7 @@ template <typename S, class T> class ElementWithVectorData : public Element {
   // @return A pointer to a copy of **this**.
   Element* really_copy(size_t increase_deg_by) const override {
     assert(increase_deg_by == 0);
-    (void)increase_deg_by;
+    (void) increase_deg_by;
     std::vector<S>* vector(new std::vector<S>(*_vector));
     return new T(vector);
   }
@@ -721,8 +722,10 @@ class BooleanMat : public ElementWithVectorData<bool, BooleanMat> {
   //
   // See <Element::redefine>.
   //
-  // Redefine **this** to be the product of <x> and <y>. This method asserts that
-  // the dimensions of <x>, <y>, and **this**, are all equal, and that neither <x>
+  // Redefine **this** to be the product of <x> and <y>. This method asserts
+  // that
+  // the dimensions of <x>, <y>, and **this**, are all equal, and that neither
+  // <x>
   // nor <y> equals **this**.
   void redefine(Element const* x, Element const* y) override;
 };
@@ -889,7 +892,8 @@ class Bipartition : public ElementWithVectorData<u_int32_t, Bipartition> {
   // non-const
   // @nr_left_blocks an integer
   //
-  // This method sets the cached value of the number of left blocks of **this** to
+  // This method sets the cached value of the number of left blocks of **this**
+  // to
   // <nr_left_blocks>. It asserts that either there is no existing cached value
   // or <nr_left_blocks> equals the existing cached value.
   inline void set_nr_left_blocks(size_t nr_left_blocks) {
@@ -988,7 +992,8 @@ class MatrixOverSemiring
   //
   // See <Element::identity>.
   //
-  // @return a new matrix with dimension equal to that of **this**, where the main
+  // @return a new matrix with dimension equal to that of **this**, where the
+  // main
   // diagonal consists of the value <Semiring::one> and every other entry
   // <Semiring::zero>.
   Element* identity() const override;
@@ -1011,8 +1016,10 @@ class MatrixOverSemiring
   //
   // See <Element::redefine>.
   //
-  // Redefine **this** to be the product of <x> and <y>. This method asserts that
-  // the dimensions of <x>, <y>, and **this**, are all equal, and that neither <x>
+  // Redefine **this** to be the product of <x> and <y>. This method asserts
+  // that
+  // the dimensions of <x>, <y>, and **this**, are all equal, and that neither
+  // <x>
   // nor <y> equals **this**.
   void redefine(Element const* x, Element const* y) override;
 

@@ -56,7 +56,8 @@ class Congruence {
     // Right congruence
     RIGHT = 1,
     // 2-sided congruence
-    TWOSIDED = 2 };
+    TWOSIDED = 2
+  };
 
   typedef size_t  coset_t;
   typedef int64_t signed_coset_t;
@@ -157,11 +158,11 @@ class Congruence {
   //         <DEFAULT_REPORT_VALUE>)
   //
   // This runs the
-  // [Todd-Coxeter algorithm](https://en.wikipedia.org/wiki/Todd–Coxeter_algorithm)
+  // [Todd-Coxeter
+  // algorithm](https://en.wikipedia.org/wiki/Todd–Coxeter_algorithm)
   // on **this**. Note that this may never terminate, but can be killed using
   // <kill>. The implementation is based on one by Goetz Pfeiffer in GAP.
   void todd_coxeter(bool report = true);
-
 
   // non-const
   // @word   a <word_t> in the (indices of) the generators of the semigroup
@@ -341,8 +342,7 @@ class Congruence {
 // @return either <cong1> or <cong2> depending on which of them the
 // <Congruence::todd_coxeter> method finished first.
 
-Congruence* parallel_todd_coxeter(Congruence* cong1,
-                                  Congruence* cong2,
-                                  bool        report = true);
+Congruence*
+parallel_todd_coxeter(Congruence* cong1, Congruence* cong2, bool report = true);
 
 #endif  // SEMIGROUPSPLUSPLUS_CONG_H_

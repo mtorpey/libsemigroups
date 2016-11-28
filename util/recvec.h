@@ -242,8 +242,7 @@ template <typename T> class RecVec {
   //
   // @return the number of occurrences of **val** in the **i**th row.
 
-  template<class UnaryPredicate>
-  size_t all_of(size_t i, UnaryPredicate pred) {
+  template <class UnaryPredicate> size_t all_of(size_t i, UnaryPredicate pred) {
     assert(i < _nr_rows);
     return std::all_of(row_cbegin(i), row_cend(i), pred);
   }
@@ -284,7 +283,7 @@ template <typename T> class RecVec {
   void clear() {
     _nr_unused_cols += _nr_used_cols;
     _nr_used_cols = 0;
-    _nr_rows = 0;
+    _nr_rows      = 0;
     _vec.clear();
   }
 

@@ -45,7 +45,7 @@ static const bool DEFAULT_REPORT_VALUE = true;
 
 //
 // Type for the index of a generator of a semigroup.
-typedef size_t                letter_t;
+typedef size_t letter_t;
 
 //
 // Type for a word over the generators of a semigroup.
@@ -929,23 +929,22 @@ class Semigroup {
   size_t _batch_size;
   size_t _degree;
   std::vector<std::pair<size_t, size_t>> _duplicate_gens;
-  std::vector<Element*>*    _elements;
-  std::vector<size_t>       _final;
-  std::vector<size_t>       _first;
-  bool                      _found_one;
-  std::vector<Element*>*    _gens;
-  std::vector<size_t>       _genslookup;
-  Element*                  _id;
-  std::vector<size_t>       _idempotents;
-  bool                      _idempotents_found;
-  pos_t                     _idempotents_start_pos;
-  std::vector<bool>         _is_idempotent;
-  std::vector<size_t>       _index;
-  cayley_graph_t*           _left;
-  std::vector<size_t>       _length;
-  std::vector<size_t>       _lenindex;
-  std::unordered_map<const Element*, size_t, myhash, myequal>
-                      _map;
+  std::vector<Element*>* _elements;
+  std::vector<size_t>    _final;
+  std::vector<size_t>    _first;
+  bool                   _found_one;
+  std::vector<Element*>* _gens;
+  std::vector<size_t>    _genslookup;
+  Element*               _id;
+  std::vector<size_t>    _idempotents;
+  bool                   _idempotents_found;
+  pos_t                  _idempotents_start_pos;
+  std::vector<bool>      _is_idempotent;
+  std::vector<size_t>    _index;
+  cayley_graph_t*        _left;
+  std::vector<size_t>    _length;
+  std::vector<size_t>    _lenindex;
+  std::unordered_map<const Element*, size_t, myhash, myequal> _map;
   std::vector<bool>   _multiplied;
   size_t              _nr;
   size_t              _nrgens;
@@ -964,7 +963,7 @@ class Semigroup {
   Element*             _tmp_product;
   size_t               _wordlen;
 
-  Reporter      _reporter;
+  Reporter _reporter;
 };
 
 #endif  // SEMIGROUPSPLUSPLUS_SEMIGROUPS_H_
