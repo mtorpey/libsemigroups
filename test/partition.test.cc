@@ -53,4 +53,44 @@ TEST_CASE("Partition 02: 1-argument constructor", "[partition][quick]") {
   REQUIRE(*part->at(1, 1) == word_t({1, 3, 2, 2}));
 
   delete part;
+
+TEST_CASE("Partition 03: really_delete",
+          "[partition][quick]") {
+  Partition<word_t*>* part = new Partition<word_t*>(3);
+  part->add_element(0, new word_t({0, 1, 1, 2, 0, 1}));
+  part->add_element(2, new word_t({0, 1, 1}));
+  part->add_element(1, new word_t({1, 2, 3, 1, 1}));
+  part->add_element(0, new word_t({0}));
+  word_t* w = new word_t({3, 2, 1, 3, 2, 1});
+  part->add_element(2, w);
+  REQUIRE(w->size() == 6);
+  part->really_delete();
+  // REQUIRE(w->size() == 6); // this would fail since w has been deleted
+  delete part;
+}
+
+TEST_CASE("Partition 03: really_delete",
+          "[partition][quick]") {
+  Partition<word_t*> part(4);
+  part.add_element(0, new word_t({0, 1, 1, 2, 0, 1}));
+  part.add_element(2, new word_t({0, 1, 1}));
+  part.add_element(1, new word_t({1, 2, 3, 1, 1}));
+  part.add_element(1, new word_t({0}));
+  part.add_element(2, new word_t({1, 3, 1}));
+  part.add_element(1, new word_t({2, 0}));
+  word_t* w = new word_t({3, 2, 1, 3, 2, 1});
+  part.add_element(3, w);
+
+  REQUIRE(part.nr_classes() == 4);
+  REQUIRE(part.size_of_class(0) == 1);
+  REQUIRE(part.size_of_class(1) == 3);
+  REQUIRE(part.size_of_class(2) == 2);
+  REQUIRE(part.size_of_class(4) == 1);
+
+  part.remove_singletons();
+  REQUIRE(part.nr_classes() == 2);
+  REQUIRE(part.size_of_class(0) == 3);
+  REQUIRE(part.size_of_class(1) == 2);
+  
+  part.really_delete();
 }
