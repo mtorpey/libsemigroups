@@ -87,6 +87,7 @@ namespace libsemigroups {
         _current_no_add(UNDEFINED),
         _defined(1),
         _extra(),
+        _finished_prefill(false),
         _forwd(1, UNDEFINED),
         _id_coset(0),
         _init_done(false),
@@ -101,6 +102,9 @@ namespace libsemigroups {
         _tc_done(false) {}
 
   void Congruence::TC::init() {
+    if (_prefilled && !_finished_prefill) {
+      init_after_prefill();
+    }
     if (!_init_done) {
       // This is the first run
       init_tc_relations();
@@ -122,15 +126,12 @@ namespace libsemigroups {
     } else {
       _table.append(*semigroup->right_cayley_graph());
     }
-    TC_KILLED
     for (auto it = _table.begin(); it < _table.end(); it++) {
       (*it)++;
     }
-    TC_KILLED
     for (size_t i = 0; i < _cong._nrgens; i++) {
       _table.set(0, i, semigroup->letter_to_pos(i) + 1);
     }
-    TC_KILLED
     init_after_prefill();
   }
 
@@ -148,6 +149,8 @@ namespace libsemigroups {
     _active    = _table.nr_rows();
     _id_coset  = 0;
 
+    _forwd.clear();
+    _bckwd.clear();
     _forwd.reserve(_active);
     _bckwd.reserve(_active);
 
@@ -163,6 +166,8 @@ namespace libsemigroups {
 
     _last = _active - 1;
 
+    _preim_init.clear();
+    _preim_next.clear();
     _preim_init.add_rows(_table.nr_rows());
     _preim_next.add_rows(_table.nr_rows());
 
@@ -172,9 +177,10 @@ namespace libsemigroups {
         _preim_next.set(c, i, _preim_init.get(b, i));
         _preim_init.set(b, i, c);
       }
-      // TC_KILLED?
+      TC_KILLED
     }
     _defined = _active;
+    _finished_prefill = true;
   }
 
   void Congruence::TC::init_tc_relations() {

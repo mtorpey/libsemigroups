@@ -79,6 +79,7 @@ namespace libsemigroups {
     class_index_t                     _current_no_add;
     size_t                            _defined;
     std::vector<relation_t>           _extra;
+    bool                              _finished_prefill;
     std::vector<class_index_t>        _forwd;
     class_index_t                     _id_coset;   // TODO(JDM) Remove?
     bool                              _init_done;  // Has init() been run yet?
