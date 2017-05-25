@@ -205,13 +205,21 @@ namespace libsemigroups {
     //! undecidable in general, and this method may never terminate.
     bool test_less_than(word_t const& w1, word_t const& w2) {
       DATA* data;
-      if (is_done()) {
+      // If we have used test_less_than before, then we store the DATA we used
+      // in a pointer called _test_less_than_data and always use it in this
+      // function thereafter.  This is because different DATA objects may
+      // produce different orderings, and it is important that we use one
+      // ordering consistently.
+      if (_test_less_than_data != nullptr) {
+        data = _test_less_than_data;
+      } else if (is_done()) {
         data = _data;
       } else {
         std::function<bool(DATA*)> words_func = [&w1, &w2](DATA* d) {
           return d->current_less_than(w1, w2) != DATA::result_t::UNKNOWN;
         };
         data = get_data(words_func);
+        _test_less_than_data = data;
       }
 
       if (!_partial_data.empty()) {
@@ -660,6 +668,7 @@ namespace libsemigroups {
     std::vector<relation_t> _relations;
     std::atomic<bool>       _relations_done;
     Semigroup*              _semigroup;
+    DATA*                   _test_less_than_data;
     cong_t                  _type;
 
     static size_t const INFTY;

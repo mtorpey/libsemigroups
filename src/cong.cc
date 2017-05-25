@@ -56,6 +56,7 @@ namespace libsemigroups {
         _relations(relations),
         _relations_done(false),
         _semigroup(nullptr),
+        _test_less_than_data(nullptr),
         _type(type) {
     // TODO(JDM): check that the entries in extra/relations are properly defined
     // i.e. that every entry is at most nrgens - 1
@@ -142,10 +143,16 @@ namespace libsemigroups {
         if ((*winner)->is_done()) {
           // Delete the losers and clear _partial_data
           for (auto loser = data.begin(); loser < winner; loser++) {
-            delete *loser;
+            assert(*loser != nullptr);
+            if (*loser != _test_less_than_data) {
+              delete *loser;
+            }
           }
           for (auto loser = winner + 1; loser < data.end(); loser++) {
-            delete *loser;
+            assert(*loser != nullptr);
+            if (*loser != _test_less_than_data) {
+              delete *loser;
+            }
           }
           _partial_data.clear();
         } else {
@@ -231,14 +238,21 @@ namespace libsemigroups {
   }
 
   void Congruence::delete_data() {
-    if (_data != nullptr) {
+    if (_data != nullptr && _data != _test_less_than_data) {
       delete _data;
+      _data = nullptr;
     }
     if (!_partial_data.empty()) {
       for (size_t i = 0; i < _partial_data.size(); i++) {
-        delete _partial_data.at(i);
+        if (_partial_data.at(i) != _test_less_than_data) {
+          delete _partial_data.at(i);
+        }
       }
       _partial_data.clear();
+    }
+    if (_test_less_than_data != nullptr) {
+      delete _test_less_than_data;
+      _test_less_than_data = nullptr;
     }
   }
 
