@@ -20,6 +20,8 @@
 
 #include "../elements.h"
 
+using namespace semigroupsplusplus;
+
 TEST_CASE("Transformation<u_int16_t>: methods", "") {
   Element* x = new Transformation<u_int16_t>({0, 1, 0});
   Element* y =
@@ -177,8 +179,8 @@ TEST_CASE("PartialPerm<u_int16_t>: methods", "") {
 }
 
 TEST_CASE("PartialPerm<u_int16_t>: hash ~8ms", "") {
-  Element* x =
-      new PartialPerm<u_int16_t>({0, 1, 2, 3, 5, 6, 9}, {9, 7, 3, 5, 4, 2, 1}, 9);
+  Element* x = new PartialPerm<u_int16_t>(
+      {0, 1, 2, 3, 5, 6, 9}, {9, 7, 3, 5, 4, 2, 1}, 9);
   for (size_t i = 0; i < 1000000; i++) {
     x->hash_value();
   }
@@ -187,19 +189,19 @@ TEST_CASE("PartialPerm<u_int16_t>: hash ~8ms", "") {
 }
 
 TEST_CASE("PartialPerm<u_int16_t>: delete/copy", "") {
-  Element* x =
-      new PartialPerm<u_int16_t>({0, 1, 2, 3, 5, 6, 9}, {9, 7, 3, 5, 4, 2, 1}, 9);
+  Element* x = new PartialPerm<u_int16_t>(
+      {0, 1, 2, 3, 5, 6, 9}, {9, 7, 3, 5, 4, 2, 1}, 9);
   Element* y = x->really_copy();
   x->really_delete();  // deletes _vector in x but not in y
   delete x;
-  REQUIRE(*y == PartialPerm<u_int16_t>({0, 1, 2, 3, 5, 6, 9},
-                                       {9, 7, 3, 5, 4, 2, 1}, 9));
+  REQUIRE(*y == PartialPerm<u_int16_t>(
+                    {0, 1, 2, 3, 5, 6, 9}, {9, 7, 3, 5, 4, 2, 1}, 9));
   PartialPerm<u_int16_t> yy = *static_cast<PartialPerm<u_int16_t>*>(y);
   REQUIRE(yy == *y);
   PartialPerm<u_int16_t> zz(yy);
   delete y;  // does not delete the _vector in y, yy, or zz
-  REQUIRE(zz == PartialPerm<u_int16_t>({0, 1, 2, 3, 5, 6, 9},
-                                       {9, 7, 3, 5, 4, 2, 1}, 9));
+  REQUIRE(zz == PartialPerm<u_int16_t>(
+                    {0, 1, 2, 3, 5, 6, 9}, {9, 7, 3, 5, 4, 2, 1}, 9));
   zz.really_delete();
 }
 
@@ -236,8 +238,8 @@ TEST_CASE("PartialPerm<u_int32_t>: methods", "") {
 }
 
 TEST_CASE("PartialPerm<u_int32_t>: hash ~8ms", "") {
-  Element* x =
-      new PartialPerm<u_int32_t>({0, 1, 2, 3, 5, 6, 9}, {9, 7, 3, 5, 4, 2, 1}, 9);
+  Element* x = new PartialPerm<u_int32_t>(
+      {0, 1, 2, 3, 5, 6, 9}, {9, 7, 3, 5, 4, 2, 1}, 9);
   for (size_t i = 0; i < 1000000; i++) {
     x->hash_value();
   }
@@ -246,19 +248,19 @@ TEST_CASE("PartialPerm<u_int32_t>: hash ~8ms", "") {
 }
 
 TEST_CASE("PartialPerm<u_int32_t>: delete/copy", "") {
-  Element* x =
-      new PartialPerm<u_int32_t>({0, 1, 2, 3, 5, 6, 9}, {9, 7, 3, 5, 4, 2, 1}, 9);
+  Element* x = new PartialPerm<u_int32_t>(
+      {0, 1, 2, 3, 5, 6, 9}, {9, 7, 3, 5, 4, 2, 1}, 9);
   Element* y = x->really_copy();
   x->really_delete();  // deletes _vector in x but not in y
   delete x;
-  REQUIRE(*y == PartialPerm<u_int32_t>({0, 1, 2, 3, 5, 6, 9},
-                                       {9, 7, 3, 5, 4, 2, 1}, 9));
+  REQUIRE(*y == PartialPerm<u_int32_t>(
+                    {0, 1, 2, 3, 5, 6, 9}, {9, 7, 3, 5, 4, 2, 1}, 9));
   PartialPerm<u_int32_t> yy = *static_cast<PartialPerm<u_int32_t>*>(y);
   REQUIRE(yy == *y);
   PartialPerm<u_int32_t> zz(yy);
   delete y;  // does not delete the _vector in y, yy, or zz
-  REQUIRE(zz == PartialPerm<u_int32_t>({0, 1, 2, 3, 5, 6, 9},
-                                       {9, 7, 3, 5, 4, 2, 1}, 9));
+  REQUIRE(zz == PartialPerm<u_int32_t>(
+                    {0, 1, 2, 3, 5, 6, 9}, {9, 7, 3, 5, 4, 2, 1}, 9));
   zz.really_delete();
 }
 
@@ -278,8 +280,8 @@ TEST_CASE("BooleanMat: methods", "") {
   REQUIRE(x->complexity() == 27);
   REQUIRE(y->complexity() == 27);
   REQUIRE(z->complexity() == 27);
-  REQUIRE(x->hash_value() % 100 == 38);
-  REQUIRE(y->hash_value() % 100 == 0);
+  REQUIRE(x->hash_value() % 100 == 97);
+  REQUIRE(y->hash_value() % 100 == 63);
   Element* id = x->identity();
   z->redefine(id, x);
   REQUIRE(*z == *x);
@@ -447,18 +449,19 @@ TEST_CASE("Bipartition: delete/copy", "") {
 }
 
 TEST_CASE("ProjectiveMaxPlusMatrix: methods", "") {
-  Element* x =
-      new ProjectiveMaxPlusMatrix({{-2, 2, 0}, {-1, 0, 0}, {1, -3, 1}});
-  REQUIRE(
-      *x == ProjectiveMaxPlusMatrix({{-4, 0, -2}, {-3, -2, -2}, {-1, -5, -1}}));
-  Element* y =
-      new ProjectiveMaxPlusMatrix({{LONG_MIN, 0, 0}, {0, 1, 0}, {1, -1, 0}});
+  Semiring* sr = new MaxPlusSemiring();
+  Element*  x =
+      new ProjectiveMaxPlusMatrix({{-2, 2, 0}, {-1, 0, 0}, {1, -3, 1}}, sr);
+  REQUIRE(*x == ProjectiveMaxPlusMatrix(
+                    {{-4, 0, -2}, {-3, -2, -2}, {-1, -5, -1}}, sr));
+  Element* y = new ProjectiveMaxPlusMatrix(
+      {{LONG_MIN, 0, 0}, {0, 1, 0}, {1, -1, 0}}, sr);
   REQUIRE(*y == ProjectiveMaxPlusMatrix(
-                    {{LONG_MIN, -1, -1}, {-1, 0, -1}, {0, -2, -1}}));
+                    {{LONG_MIN, -1, -1}, {-1, 0, -1}, {0, -2, -1}}, sr));
   REQUIRE(!(*x == *y));
   y->redefine(x, x);
-  REQUIRE(
-      *y == ProjectiveMaxPlusMatrix({{-2, -1, -1}, {-2, -2, -2}, {-1, 0, -1}}));
+  REQUIRE(*y == ProjectiveMaxPlusMatrix(
+                    {{-2, -1, -1}, {-2, -2, -2}, {-1, 0, -1}}, sr));
   REQUIRE(*x < *y);
   REQUIRE(x->degree() == 3);
   REQUIRE(y->degree() == 3);
@@ -477,35 +480,41 @@ TEST_CASE("ProjectiveMaxPlusMatrix: methods", "") {
   delete y;
   id->really_delete();
   delete id;
+  delete sr;
 }
 
 TEST_CASE("ProjectiveMaxPlusMatrix: hash ~11ms", "") {
-  Element* x =
-      new ProjectiveMaxPlusMatrix({{-2, 2, 0}, {-1, 0, 0}, {1, -3, 1}});
+  Semiring* sr = new MaxPlusSemiring();
+  Element*  x =
+      new ProjectiveMaxPlusMatrix({{-2, 2, 0}, {-1, 0, 0}, {1, -3, 1}}, sr);
   for (size_t i = 0; i < 1000000; i++) {
     x->hash_value();
   }
   x->really_delete();
   delete x;
+  delete sr;
 }
 
 TEST_CASE("ProjectiveMaxPlusMatrix: delete/copy", "") {
-  Element* x =
-      new ProjectiveMaxPlusMatrix({{-2, 2, 0}, {-1, 0, 0}, {1, -3, 1}});
+  Semiring* sr = new MaxPlusSemiring();
+  Element*  x =
+      new ProjectiveMaxPlusMatrix({{-2, 2, 0}, {-1, 0, 0}, {1, -3, 1}}, sr);
   Element* y = x->really_copy();
   x->really_delete();  // deletes _vector in x but not in y
   delete x;
-  REQUIRE(*y == ProjectiveMaxPlusMatrix({{-2, 2, 0}, {-1, 0, 0}, {1, -3, 1}}));
+  REQUIRE(*y
+          == ProjectiveMaxPlusMatrix({{-2, 2, 0}, {-1, 0, 0}, {1, -3, 1}}, sr));
   ProjectiveMaxPlusMatrix yy = *static_cast<ProjectiveMaxPlusMatrix*>(y);
   REQUIRE(yy == *y);
   ProjectiveMaxPlusMatrix zz(yy);
   delete y;  // does not delete the _vector in y, yy, or zz
   REQUIRE(zz == ProjectiveMaxPlusMatrix({{-2, 2, 0}, {-1, 0, 0}, {1, -3, 1}}));
   zz.really_delete();
+  delete sr;
 }
 
 TEST_CASE("MatrixOverSemiring [Integers]: methods", "") {
-  Semiring* sr = new semiring::Integers();
+  Semiring* sr = new Integers();
   Element* x = new MatrixOverSemiring({{-2, 2, 0}, {-1, 0, 0}, {1, -3, 1}}, sr);
   REQUIRE(*x == MatrixOverSemiring({{-2, 2, 0}, {-1, 0, 0}, {1, -3, 1}}, sr));
   Element* y =
@@ -535,7 +544,7 @@ TEST_CASE("MatrixOverSemiring [Integers]: methods", "") {
 }
 
 TEST_CASE("MatrixOverSemiring [Integers]: hash ~11ms", "") {
-  Semiring* sr = new semiring::Integers();
+  Semiring* sr = new Integers();
   Element* x = new MatrixOverSemiring({{-2, 2, 0}, {-1, 0, 0}, {1, -3, 1}}, sr);
   for (size_t i = 0; i < 1000000; i++) {
     x->hash_value();
@@ -546,7 +555,7 @@ TEST_CASE("MatrixOverSemiring [Integers]: hash ~11ms", "") {
 }
 
 TEST_CASE("MatrixOverSemiring [MaxPlusSemiring]: methods", "") {
-  Semiring* sr = new semiring::MaxPlusSemiring();
+  Semiring* sr = new MaxPlusSemiring();
   Element* x = new MatrixOverSemiring({{-2, 2, 0}, {-1, 0, 0}, {1, -3, 1}}, sr);
   REQUIRE(*x == MatrixOverSemiring({{-2, 2, 0}, {-1, 0, 0}, {1, -3, 1}}, sr));
   Element* y =
@@ -576,7 +585,7 @@ TEST_CASE("MatrixOverSemiring [MaxPlusSemiring]: methods", "") {
 }
 
 TEST_CASE("MatrixOverSemiring [MaxPlusSemiring]: hash ~11ms", "") {
-  Semiring* sr = new semiring::MaxPlusSemiring();
+  Semiring* sr = new MaxPlusSemiring();
   Element* x = new MatrixOverSemiring({{-2, 2, 0}, {-1, 0, 0}, {1, -3, 1}}, sr);
   for (size_t i = 0; i < 1000000; i++) {
     x->hash_value();
@@ -587,7 +596,7 @@ TEST_CASE("MatrixOverSemiring [MaxPlusSemiring]: hash ~11ms", "") {
 }
 
 TEST_CASE("MatrixOverSemiring [MinPlusSemiring]: methods", "") {
-  Semiring* sr = new semiring::MinPlusSemiring();
+  Semiring* sr = new MinPlusSemiring();
   Element* x = new MatrixOverSemiring({{-2, 2, 0}, {-1, 0, 0}, {1, -3, 1}}, sr);
   REQUIRE(*x == MatrixOverSemiring({{-2, 2, 0}, {-1, 0, 0}, {1, -3, 1}}, sr));
   Element* y =
@@ -618,7 +627,7 @@ TEST_CASE("MatrixOverSemiring [MinPlusSemiring]: methods", "") {
 }
 
 TEST_CASE("MatrixOverSemiring [MinPlusSemiring]: hash ~11ms", "") {
-  Semiring* sr = new semiring::MinPlusSemiring();
+  Semiring* sr = new MinPlusSemiring();
   Element* x = new MatrixOverSemiring({{-2, 2, 0}, {-1, 0, 0}, {1, -3, 1}}, sr);
   for (size_t i = 0; i < 1000000; i++) {
     x->hash_value();
@@ -629,7 +638,7 @@ TEST_CASE("MatrixOverSemiring [MinPlusSemiring]: hash ~11ms", "") {
 }
 
 TEST_CASE("MatrixOverSemiring [TropicalMaxPlusSemiring]: methods", "") {
-  Semiring* sr = new semiring::TropicalMaxPlusSemiring(33);
+  Semiring* sr = new TropicalMaxPlusSemiring(33);
   Element*  x =
       new MatrixOverSemiring({{22, 21, 0}, {10, 0, 0}, {1, 32, 1}}, sr);
   REQUIRE(*x == MatrixOverSemiring({{22, 21, 0}, {10, 0, 0}, {1, 32, 1}}, sr));
@@ -661,7 +670,7 @@ TEST_CASE("MatrixOverSemiring [TropicalMaxPlusSemiring]: methods", "") {
 }
 
 TEST_CASE("MatrixOverSemiring [TropicalMaxPlusSemiring]: hash ~11ms", "") {
-  Semiring* sr = new semiring::TropicalMaxPlusSemiring(33);
+  Semiring* sr = new TropicalMaxPlusSemiring(33);
   Element*  x =
       new MatrixOverSemiring({{22, 21, 0}, {10, 0, 0}, {1, 32, 1}}, sr);
   for (size_t i = 0; i < 1000000; i++) {
@@ -673,7 +682,7 @@ TEST_CASE("MatrixOverSemiring [TropicalMaxPlusSemiring]: hash ~11ms", "") {
 }
 
 TEST_CASE("MatrixOverSemiring [TropicalMinPlusSemiring]: methods", "") {
-  Semiring* sr = new semiring::TropicalMinPlusSemiring(33);
+  Semiring* sr = new TropicalMinPlusSemiring(33);
   Element*  x =
       new MatrixOverSemiring({{22, 21, 0}, {10, 0, 0}, {1, 32, 1}}, sr);
   REQUIRE(*x == MatrixOverSemiring({{22, 21, 0}, {10, 0, 0}, {1, 32, 1}}, sr));
@@ -704,7 +713,7 @@ TEST_CASE("MatrixOverSemiring [TropicalMinPlusSemiring]: methods", "") {
 }
 
 TEST_CASE("MatrixOverSemiring [TropicalMinPlusSemiring]: hash ~11ms", "") {
-  Semiring* sr = new semiring::TropicalMinPlusSemiring(33);
+  Semiring* sr = new TropicalMinPlusSemiring(33);
   Element*  x =
       new MatrixOverSemiring({{22, 21, 0}, {10, 0, 0}, {1, 32, 1}}, sr);
   for (size_t i = 0; i < 1000000; i++) {
@@ -716,7 +725,7 @@ TEST_CASE("MatrixOverSemiring [TropicalMinPlusSemiring]: hash ~11ms", "") {
 }
 
 TEST_CASE("MatrixOverSemiring [NaturalSemiring]: methods", "") {
-  Semiring* sr = new semiring::NaturalSemiring(33, 2);
+  Semiring* sr = new NaturalSemiring(33, 2);
   Element*  x =
       new MatrixOverSemiring({{22, 21, 0}, {10, 0, 0}, {1, 32, 1}}, sr);
   REQUIRE(*x == MatrixOverSemiring({{22, 21, 0}, {10, 0, 0}, {1, 32, 1}}, sr));
@@ -748,7 +757,7 @@ TEST_CASE("MatrixOverSemiring [NaturalSemiring]: methods", "") {
 }
 
 TEST_CASE("MatrixOverSemiring [NaturalSemiring]: hash ~11ms", "") {
-  Semiring* sr = new semiring::NaturalSemiring(33, 2);
+  Semiring* sr = new NaturalSemiring(33, 2);
   Element*  x =
       new MatrixOverSemiring({{22, 21, 0}, {10, 0, 0}, {1, 32, 1}}, sr);
 
@@ -761,7 +770,7 @@ TEST_CASE("MatrixOverSemiring [NaturalSemiring]: hash ~11ms", "") {
 }
 
 TEST_CASE("MatrixOverSemiring [Integers]: delete/copy", "") {
-  Semiring* sr = new semiring::Integers();
+  Semiring* sr = new Integers();
   Element* x = new MatrixOverSemiring({{-2, 2, 0}, {-1, 0, 0}, {1, -3, 1}}, sr);
   Element* y = x->really_copy();
   x->really_delete();  // deletes _vector in x but not in y
@@ -777,7 +786,7 @@ TEST_CASE("MatrixOverSemiring [Integers]: delete/copy", "") {
 }
 
 TEST_CASE("MatrixOverSemiring [MaxPlusSemiring]: delete/copy", "") {
-  Semiring* sr = new semiring::MaxPlusSemiring();
+  Semiring* sr = new MaxPlusSemiring();
   Element* x = new MatrixOverSemiring({{-2, 2, 0}, {-1, 0, 0}, {1, -3, 1}}, sr);
   Element* y = x->really_copy();
   x->really_delete();  // deletes _vector in x but not in y
@@ -793,7 +802,7 @@ TEST_CASE("MatrixOverSemiring [MaxPlusSemiring]: delete/copy", "") {
 }
 
 TEST_CASE("MatrixOverSemiring [MinPlusSemiring]: delete/copy", "") {
-  Semiring* sr = new semiring::MinPlusSemiring();
+  Semiring* sr = new MinPlusSemiring();
   Element* x = new MatrixOverSemiring({{-2, 2, 0}, {-1, 0, 0}, {1, -3, 1}}, sr);
   Element* y = x->really_copy();
   x->really_delete();  // deletes _vector in x but not in y
@@ -809,7 +818,7 @@ TEST_CASE("MatrixOverSemiring [MinPlusSemiring]: delete/copy", "") {
 }
 
 TEST_CASE("MatrixOverSemiring [TropicalMaxPlusSemiring]: delete/copy", "") {
-  Semiring* sr = new semiring::TropicalMaxPlusSemiring(23);
+  Semiring* sr = new TropicalMaxPlusSemiring(23);
   Element* x = new MatrixOverSemiring({{-2, 2, 0}, {-1, 0, 0}, {1, -3, 1}}, sr);
   Element* y = x->really_copy();
   x->really_delete();  // deletes _vector in x but not in y
@@ -825,7 +834,7 @@ TEST_CASE("MatrixOverSemiring [TropicalMaxPlusSemiring]: delete/copy", "") {
 }
 
 TEST_CASE("MatrixOverSemiring [TropicalMinPlusSemiring]: delete/copy", "") {
-  Semiring* sr = new semiring::TropicalMinPlusSemiring(23);
+  Semiring* sr = new TropicalMinPlusSemiring(23);
   Element* x = new MatrixOverSemiring({{-2, 2, 0}, {-1, 0, 0}, {1, -3, 1}}, sr);
   Element* y = x->really_copy();
   x->really_delete();  // deletes _vector in x but not in y
@@ -841,7 +850,7 @@ TEST_CASE("MatrixOverSemiring [TropicalMinPlusSemiring]: delete/copy", "") {
 }
 
 TEST_CASE("MatrixOverSemiring [NaturalSemiring]: delete/copy", "") {
-  Semiring* sr = new semiring::NaturalSemiring(23, 0);
+  Semiring* sr = new NaturalSemiring(23, 0);
   Element* x = new MatrixOverSemiring({{-2, 2, 0}, {-1, 0, 0}, {1, -3, 1}}, sr);
   Element* y = x->really_copy();
   x->really_delete();  // deletes _vector in x but not in y

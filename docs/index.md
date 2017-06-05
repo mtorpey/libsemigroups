@@ -3,6 +3,7 @@
 Semigroups++
 
 # Semigroups++ Version 0.0.1
+### by [J. D. Mitchell](http://www-groups.mcs.st-andrews.ac.uk/~jamesm/) with contributions by [J. Jonusas](http://www-circa.mcs.st-andrews.ac.uk/~julius/) and [M. Torpey](http://www-circa.mcs.st-andrews.ac.uk/~mct25/)
 
 This is the source code documentation for Semigroups++ produced using
 [cldoc](https://github.com/jessevdk/cldoc). This documentation can be
@@ -37,10 +38,15 @@ progress. Missing features include those for:
 
 These will be included in a future version. 
 
-At present the Semigroups++ library
-performs less well than 
+The Semigroups++ library performs roughly the same as 
 [Semigroupe 2.01](https://www.irif.fr/~jep/Logiciels/Semigroupe2.0/semigroupe2.html)
-due, mainly, to the way that memory is allocated. 
+when there is a known upper bound on the size of the semigroup being
+enumerated, and this is used to initialise the data structures for the
+semigroup; see <semigroupsplusplus::Semigroup::set_batch_size> for more
+details. Note that in 
+[Semigroupe 2.01](https://www.irif.fr/~jep/Logiciels/Semigroupe2.0/semigroupe2.html)
+it is always necessary to provide such an upper bound, but in the Semigroups++
+library it is not. 
 
 The Semigroups++ library also has some advantages over 
 [Semigroupe 2.01](https://www.irif.fr/~jep/Logiciels/Semigroupe2.0/semigroupe2.html):

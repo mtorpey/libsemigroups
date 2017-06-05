@@ -23,11 +23,9 @@
 
 #include <algorithm>
 
-// Namespace for semirings
+namespace semigroupsplusplus {
 
-namespace semiring {
-
-  // Abstract base class.
+  // Abstract
   // A *semiring* is a set *R* together with two binary operations + and x
   // (called *addition* and *multiplication*) such that *(R, +)* is a
   // commutative monoid with identity *0*, *(R, x)* is a monoid with identity
@@ -104,12 +102,13 @@ namespace semiring {
     }
   };
 
+  // Non-abstract
   // The usual ring of integers.
   //
   // This class implements ring of integers.
   class Integers : public Semiring {
    public:
-    // Default constructor.
+    // Default
     Integers() : Semiring() {}
 
     // Multiplicative identity.
@@ -147,14 +146,14 @@ namespace semiring {
     }
   };
 
-  // Max-plus semiring.
+  // Non-abstract
   //
   // The *max-plus semiring* consists of the set of natural numbers together
   // with negative infinity with operations max and plus. Negative infinity is
   // represented by int64_t_MIN.
   class MaxPlusSemiring : public Semiring {
    public:
-    // Default constructor.
+    // Default
     MaxPlusSemiring() : Semiring() {}
 
     // Semiring multiplicative identity.
@@ -197,7 +196,7 @@ namespace semiring {
     }
   };
 
-  // Min-plus semiring.
+  // Non-abstract
   //
   // The *min-plus semiring* consists of the set of natural numbers together
   // with infinity with operations min and plus. Infinity is
@@ -205,7 +204,7 @@ namespace semiring {
 
   class MinPlusSemiring : public Semiring {
    public:
-    // Default constructor.
+    // Default
     MinPlusSemiring() : Semiring() {}
 
     // Semiring multiplicative identity.
@@ -248,13 +247,14 @@ namespace semiring {
     }
   };
 
+  // Abstract
   // Tropical semiring base class.
   //
   // This class provides common methods for its subclasses
   // <TropicalMaxPlusSemiring> and <TropicalMinPlusSemiring>.
   class TropicalSemiring : public Semiring {
    public:
-    // Default constructor.
+    // Default
     // @threshold the largest integer in the semiring (or equivalently the
     // size of the semiring minus 2).
     explicit TropicalSemiring(int64_t threshold)
@@ -273,6 +273,7 @@ namespace semiring {
     int64_t _threshold;
   };
 
+  // Non-abstract
   // Tropical max-plus semiring.
   //
   // The **tropical max-plus semiring** consists of the integers *0, ... , t*
@@ -280,7 +281,7 @@ namespace semiring {
   // infinity. Negative infinity is represented by LONG_MIN.
   class TropicalMaxPlusSemiring : public TropicalSemiring {
    public:
-    // Default constructor.
+    // Default
     // @threshold the largest integer in the semiring (or equivalently the
     // size of the semiring minus 2).
     explicit TropicalMaxPlusSemiring(int64_t threshold)
@@ -328,6 +329,7 @@ namespace semiring {
     }
   };
 
+  // Non-abstract
   // Tropical min-plus semiring.
   //
   // The **tropical min-plus semiring** consists of the integers *0, ... , t*
@@ -335,7 +337,7 @@ namespace semiring {
   // infinity. Infinity is represented by LONG_MAX.
   class TropicalMinPlusSemiring : public TropicalSemiring {
    public:
-    // Default constructor.
+    // Default
     // @threshold the largest integer in the semiring (or equivalently the
     // size of the semiring minus 2).
     explicit TropicalMinPlusSemiring(int64_t threshold)
@@ -386,6 +388,7 @@ namespace semiring {
     }
   };
 
+  // Non-abstract
   // Semiring of natural numbers mod *t*, *p*.
   //
   // This class implements the *semiring* consisting of *0, 1, ..., t, t + 1,
@@ -394,7 +397,7 @@ namespace semiring {
 
   class NaturalSemiring : public Semiring {
    public:
-    // Default constructor.
+    // Default
     // @threshold the threshold, should be positive, this is not checked.
     // @period    the period, should be non-negative, this is not checked.
     NaturalSemiring(int64_t threshold, int64_t period)
@@ -469,5 +472,6 @@ namespace semiring {
     int64_t _threshold;
     int64_t _period;
   };
-}  // namespace semiring
+}  // namespace semigroupsplusplus
+
 #endif  // SEMIGROUPSPLUSPLUS_SEMIRING_H_

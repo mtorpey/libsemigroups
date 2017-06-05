@@ -21,6 +21,8 @@
 #include "../blocks.h"
 #include "../elements.h"
 
+using namespace semigroupsplusplus;
+
 TEST_CASE("Blocks: empty blocks", "") {
   Blocks b1;
   Blocks b2 = Blocks(new std::vector<u_int32_t>({0, 1, 2, 1, 0, 2}),
@@ -85,8 +87,8 @@ TEST_CASE("Blocks: left blocks of bipartition", "") {
 }
 
 TEST_CASE("Blocks: right blocks of bipartition", "") {
-  Bipartition x = Bipartition(
-      {0, 1, 1, 1, 1, 2, 3, 2, 4, 4, 5, 2, 4, 2, 1, 1, 1, 2, 3, 2});
+  Bipartition x =
+      Bipartition({0, 1, 1, 1, 1, 2, 3, 2, 4, 4, 5, 2, 4, 2, 1, 1, 1, 2, 3, 2});
   Blocks* b = x.right_blocks();
   REQUIRE(b == b);
   REQUIRE(!(b < b));

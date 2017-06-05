@@ -21,6 +21,8 @@
 
 #include "../util/recvec.h"
 
+using namespace semigroupsplusplus;
+
 TEST_CASE("RecVec: default constructor with 3 default args", "[constructor]") {
   RecVec<bool> rv = RecVec<bool>();
   REQUIRE(rv.size() == 0);
@@ -52,21 +54,23 @@ TEST_CASE("RecVec: default constructor with 0 default args", "[constructor]") {
 }
 
 TEST_CASE("RecVec: copy constructor with 1 default args", "[constructor]") {
-  RecVec<size_t> rv = RecVec<size_t>(3, 7, 666);
+  RecVec<size_t> rv   = RecVec<size_t>(3, 7, 666);
   RecVec<size_t> copy = RecVec<size_t>(rv);
   REQUIRE(copy.size() == 21);
   REQUIRE(copy.nr_cols() == 3);
   REQUIRE(copy.nr_rows() == 7);
-  REQUIRE(all_of(copy.begin(), copy.end(), [](size_t val) { return val == 666; }));
+  REQUIRE(
+      all_of(copy.begin(), copy.end(), [](size_t val) { return val == 666; }));
 }
 
 TEST_CASE("RecVec: copy constructor with 0 default args", "[constructor]") {
-  RecVec<size_t> rv = RecVec<size_t>(3, 7, 666);
+  RecVec<size_t> rv   = RecVec<size_t>(3, 7, 666);
   RecVec<size_t> copy = RecVec<size_t>(rv, 2);
   REQUIRE(copy.size() == 35);
   REQUIRE(copy.nr_cols() == 5);
   REQUIRE(copy.nr_rows() == 7);
-  REQUIRE(all_of(copy.begin(), copy.end(), [](size_t val) { return val == 666; }));
+  REQUIRE(
+      all_of(copy.begin(), copy.end(), [](size_t val) { return val == 666; }));
 }
 
 TEST_CASE("RecVec: method add_rows with 1 default args", "[method]") {
@@ -130,7 +134,7 @@ TEST_CASE("RecVec: method set/get", "[method]") {
       rv.set(row, col, val++);
     }
   }
-  val = 0;
+  val           = 0;
   auto check_it = [&val](RecVec<size_t>& rv) {
     for (size_t col = 0; col < 100; col++) {
       for (size_t row = 0; row < 50; row++) {
@@ -160,7 +164,8 @@ TEST_CASE("RecVec: method append 1/2", "[method]") {
   REQUIRE(rv2.size() == 5000);
   REQUIRE(rv2.nr_cols() == 100);
   REQUIRE(rv2.nr_rows() == 50);
-  REQUIRE(all_of(rv2.begin(), rv2.end(), [](size_t val) { return val == 666; }));
+  REQUIRE(
+      all_of(rv2.begin(), rv2.end(), [](size_t val) { return val == 666; }));
   auto check_it = [&rv1](size_t begin, size_t end, size_t val) {
     for (size_t col = 0; col < 100; col++) {
       for (size_t row = begin; row < end; row++) {
@@ -202,7 +207,8 @@ TEST_CASE("RecVec: method append 2/2", "[method]") {
   REQUIRE(rv2.size() == 5000);
   REQUIRE(rv2.nr_cols() == 100);
   REQUIRE(rv2.nr_rows() == 50);
-  REQUIRE(all_of(rv2.begin(), rv2.end(), [](size_t val) { return val == 666; }));
+  REQUIRE(
+      all_of(rv2.begin(), rv2.end(), [](size_t val) { return val == 666; }));
   auto check_it = [&rv1](size_t begin, size_t end, size_t val) {
     for (size_t col = 0; col < 100; col++) {
       for (size_t row = begin; row < end; row++) {

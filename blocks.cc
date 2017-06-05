@@ -17,8 +17,7 @@
 //
 
 // This file contains the declaration of a static data member for the blocks
-// class. It is required because otherwise Blocks::UNDEFINED is declared more
-// than once.
+// class.
 
 // Blocks are stored internally as a list consisting of:
 //
@@ -30,68 +29,72 @@
 
 #include "blocks.h"
 
-u_int32_t Blocks::UNDEFINED = -1;
+namespace semigroupsplusplus {
 
-Blocks::Blocks(Blocks const& copy)
-    : _blocks(nullptr),
-      _lookup(nullptr),
-      _nr_blocks(copy._nr_blocks),
-      _rank(copy._rank) {
-  if (copy._blocks != nullptr) {
-    assert(copy._lookup != nullptr);
-    _blocks = new std::vector<u_int32_t>(*copy._blocks);
-    _lookup = new std::vector<bool>(*copy._lookup);
-  } else {
-    assert(copy._lookup == nullptr);
-  }
-}
+  u_int32_t Blocks::UNDEFINED = -1;
 
-bool Blocks::operator==(const Blocks& that) const {
-  if (this->degree() != that.degree() || this->_nr_blocks != that._nr_blocks) {
-    return false;
-  } else if (this->_nr_blocks == 0) {
-    return true;
-  }
-  return (*(this->_blocks) == *(that._blocks)
-          && *(this->_lookup) == *(that._lookup));
-}
-
-bool Blocks::operator<(const Blocks& that) const {
-  if (this->degree() != that.degree()) {
-    return (this->degree() < that.degree());
-  }
-  for (size_t i = 0; i < this->degree(); i++) {
-    if (((*this->_blocks)[i] != (*that._blocks)[i])) {
-      return (*this->_blocks)[i] < (*that._blocks)[i];
+  Blocks::Blocks(Blocks const& copy)
+      : _blocks(nullptr),
+        _lookup(nullptr),
+        _nr_blocks(copy._nr_blocks),
+        _rank(copy._rank) {
+    if (copy._blocks != nullptr) {
+      assert(copy._lookup != nullptr);
+      _blocks = new std::vector<u_int32_t>(*copy._blocks);
+      _lookup = new std::vector<bool>(*copy._lookup);
+    } else {
+      assert(copy._lookup == nullptr);
     }
   }
-  for (size_t i = 0; i < this->nr_blocks(); i++) {
-    if (((*this->_lookup)[i] && !(*that._lookup)[i])) {
-      return true;
-    } else if ((!(*this->_lookup)[i] && (*that._lookup)[i])) {
+
+  bool Blocks::operator==(const Blocks& that) const {
+    if (this->degree() != that.degree()
+        || this->_nr_blocks != that._nr_blocks) {
       return false;
+    } else if (this->_nr_blocks == 0) {
+      return true;
     }
+    return (*(this->_blocks) == *(that._blocks)
+            && *(this->_lookup) == *(that._lookup));
   }
-  return false;
-}
 
-u_int32_t Blocks::rank() {
-  if (_rank == UNDEFINED) {
-    _rank = std::count(_lookup->cbegin(), _lookup->cend(), true);
+  bool Blocks::operator<(const Blocks& that) const {
+    if (this->degree() != that.degree()) {
+      return (this->degree() < that.degree());
+    }
+    for (size_t i = 0; i < this->degree(); i++) {
+      if (((*this->_blocks)[i] != (*that._blocks)[i])) {
+        return (*this->_blocks)[i] < (*that._blocks)[i];
+      }
+    }
+    for (size_t i = 0; i < this->nr_blocks(); i++) {
+      if (((*this->_lookup)[i] && !(*that._lookup)[i])) {
+        return true;
+      } else if ((!(*this->_lookup)[i] && (*that._lookup)[i])) {
+        return false;
+      }
+    }
+    return false;
   }
-  return _rank;
-}
 
-size_t Blocks::hash_value() const {
-  if (_nr_blocks == 0) {
-    return 0;
+  u_int32_t Blocks::rank() {
+    if (_rank == UNDEFINED) {
+      _rank = std::count(_lookup->cbegin(), _lookup->cend(), true);
+    }
+    return _rank;
   }
-  size_t seed = 0;
-  for (auto const& index : *_blocks) {
-    seed = ((seed * _blocks->size()) + index);
+
+  size_t Blocks::hash_value() const {
+    if (_nr_blocks == 0) {
+      return 0;
+    }
+    size_t seed = 0;
+    for (auto const& index : *_blocks) {
+      seed = ((seed * _blocks->size()) + index);
+    }
+    for (auto val : *_lookup) {
+      seed = ((seed * _blocks->size()) + val);
+    }
+    return seed;
   }
-  for (auto val : *_lookup) {
-    seed = ((seed * _blocks->size()) + val);
-  }
-  return seed;
-}
+}  // namespace semigroupsplusplus

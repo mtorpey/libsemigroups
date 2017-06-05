@@ -16,12 +16,14 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include <chrono>         // std::chrono::seconds
-#include <thread>         // std::this_thread::sleep_for
+#include <chrono>
+#include <thread>
 
 #include "catch.hpp"
 
 #include "../util/report.h"
+
+using namespace semigroupsplusplus;
 
 // Classes for testing
 class Class {
@@ -334,7 +336,7 @@ TEST_CASE("Reporter: report, 0 parameters, start/stop timer", "") {
   r.set_report(true);
   r.set_ostream(os);
 
-  r.stop_timer(); // does nothing
+  r.stop_timer();  // does nothing
   REQUIRE(os->str() == "");
 
   r.start_timer();
@@ -342,7 +344,8 @@ TEST_CASE("Reporter: report, 0 parameters, start/stop timer", "") {
   r.stop_timer();
   std::string prefix = "Thread #0: elapsed time = ";
   std::string result = os->str();
-  REQUIRE(std::string(result.begin(), result.begin() + prefix.size()) == prefix);
+  REQUIRE(std::string(result.begin(), result.begin() + prefix.size())
+          == prefix);
 
   os->str("");  // Clear the ostream
 
@@ -352,7 +355,8 @@ TEST_CASE("Reporter: report, 0 parameters, start/stop timer", "") {
   r.stop_timer();
   prefix = "Thread #0: function_name: elapsed time = ";
   result = os->str();
-  REQUIRE(std::string(result.begin(), result.begin() + prefix.size()) == prefix);
+  REQUIRE(std::string(result.begin(), result.begin() + prefix.size())
+          == prefix);
 
   os->str("");  // Clear the ostream
 
@@ -362,7 +366,8 @@ TEST_CASE("Reporter: report, 0 parameters, start/stop timer", "") {
   r.stop_timer();
   prefix = "Thread #7: function_name: elapsed time = ";
   result = os->str();
-  REQUIRE(std::string(result.begin(), result.begin() + prefix.size()) == prefix);
+  REQUIRE(std::string(result.begin(), result.begin() + prefix.size())
+          == prefix);
 
   delete os;
 }
@@ -374,7 +379,7 @@ TEST_CASE("Reporter: report, 1 parameter, start/stop timer", "") {
   r.set_report(true);
   r.set_ostream(os);
 
-  r.stop_timer(); // does nothing
+  r.stop_timer();  // does nothing
   REQUIRE(os->str() == "");
 
   r.start_timer();
@@ -382,7 +387,8 @@ TEST_CASE("Reporter: report, 1 parameter, start/stop timer", "") {
   r.stop_timer();
   std::string prefix = "Thread #0: Class: elapsed time = ";
   std::string result = os->str();
-  REQUIRE(std::string(result.begin(), result.begin() + prefix.size()) == prefix);
+  REQUIRE(std::string(result.begin(), result.begin() + prefix.size())
+          == prefix);
 
   os->str("");  // Clear the ostream
 
@@ -392,7 +398,8 @@ TEST_CASE("Reporter: report, 1 parameter, start/stop timer", "") {
   r.stop_timer();
   prefix = "Thread #0: Class::function_name: elapsed time = ";
   result = os->str();
-  REQUIRE(std::string(result.begin(), result.begin() + prefix.size()) == prefix);
+  REQUIRE(std::string(result.begin(), result.begin() + prefix.size())
+          == prefix);
 
   os->str("");  // Clear the ostream
 
@@ -402,7 +409,8 @@ TEST_CASE("Reporter: report, 1 parameter, start/stop timer", "") {
   r.stop_timer();
   prefix = "Thread #7: Class::function_name: elapsed time = ";
   result = os->str();
-  REQUIRE(std::string(result.begin(), result.begin() + prefix.size()) == prefix);
+  REQUIRE(std::string(result.begin(), result.begin() + prefix.size())
+          == prefix);
 
   delete os;
 }
@@ -443,25 +451,37 @@ TEST_CASE("Reporter: report, 0 parameters, threads", "") {
 
 TEST_CASE("Reporter: report, 1 parameter, threads", "") {
   std::ostringstream* os = new std::ostringstream();
-  Class c;
+  Class               c;
   Reporter            r(c);
   r.set_report(true);
   r.set_ostream(os);
+  size_t winner = -1;
 
-  auto func = [&r](size_t wait_for_ms, size_t thread_id) {
+  auto func = [&winner, &r](size_t wait_for_ms, size_t thread_id) {
     std::this_thread::sleep_for(std::chrono::milliseconds(wait_for_ms));
     r.lock();
     r("func", thread_id) << "Something!";
+    if (winner == static_cast<size_t>(-1)) {
+      winner = thread_id;
+    }
     r.unlock();
   };
 
-  std::thread t0(func, 10, 0);
-  std::thread t1(func, 20, 1);
+  std::thread t0(func, 1, 0);
+  std::thread t1(func, 1, 1);
 
   t0.join();
   t1.join();
 
-  REQUIRE(os->str() == "Thread #0: Class::func: Something!Thread #1: "
-                       "Class::func: Something!");
+  std::string expected;
+  if (winner == 0) {
+    expected =
+        "Thread #0: Class::func: Something!Thread #1: Class::func: Something!";
+  } else {
+    expected =
+        "Thread #1: Class::func: Something!Thread #0: Class::func: Something!";
+  }
+
+  REQUIRE(os->str() == expected);
   delete os;
 }

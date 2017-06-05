@@ -8,3 +8,4 @@ html
 .semigroups.h.swo
 test/test
 *.o
+gh-pages
