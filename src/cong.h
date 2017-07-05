@@ -159,6 +159,31 @@ namespace libsemigroups {
       return data->word_to_class_index(word);
     }
 
+    //! Returns a word which is the canonical representative of the congruence
+    //! class of \p word.
+    //!
+    //! The parameter \p word must be a libsemigroups::word_t consisting of
+    //! indices of the generators of the semigroup over which \c this is
+    //! defined.
+    //!
+    //! \warning The method for finding the structure of a congruence is
+    //! non-deterministic, and the return value of this method may vary
+    //! between different instances of the same congruence.
+    word_t normal_form(word_t const& word) {
+      DATA* data;
+      if (is_done()) {
+        data = _data;
+      } else {
+        std::function<bool(DATA*)> nf_func = [&word](DATA* d) {
+          return !d->normal_form(word).empty();
+        };
+        data = get_data(nf_func);
+      }
+      word_t result = data->normal_form(word);
+      assert(!result.empty());
+      return result;
+    }
+
     //!  Returns \c true if the words \p w1 and \p w2 belong to the
     //! same congruence class.
     //!
@@ -530,6 +555,10 @@ namespace libsemigroups {
       // This method returns the index of the congruence class containing the
       // element of the semigroup defined by word.
       virtual class_index_t word_to_class_index(word_t const& word) = 0;
+
+      // This method returns a canonical representative of the class containing
+      // the element of the semigroup defined by word.
+      virtual word_t normal_form(word_t const& word) = 0;
 
       // Possible result of questions that might not be answerable.
       enum result_t { TRUE = 0, FALSE = 1, UNKNOWN = 2 };
