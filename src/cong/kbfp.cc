@@ -108,6 +108,15 @@ namespace libsemigroups {
     return pos;
   }
 
+  word_t Congruence::KBFP::normal_form(word_t const& word) {
+    init();
+    if (!is_done() && is_killed()) {
+      // This cannot be reliably tested: see TC::current_equals for more info
+      return word_t();
+    }
+    return _rws->rewrite(word);
+  }
+
   Congruence::DATA::result_t
   Congruence::KBFP::current_equals(word_t const& w1, word_t const& w2) {
     init();

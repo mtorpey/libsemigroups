@@ -204,8 +204,14 @@ namespace libsemigroups {
     }
 
     //! Returns the rewritten version of the word_t \p w, as a word_t
-    word_t RWS::rewrite(word_t const& w) const {
-      return rws_word_to_word(rewrite(word_to_rws_word(w)));
+    word_t rewrite(word_t const& w) const {
+      rws_word_t* rws_w = word_to_rws_word(w);
+      rewrite(rws_w);
+      word_t* out_ptr = rws_word_to_word(rws_w);
+      word_t  out     = *out_ptr;
+      delete rws_w;
+      delete out_ptr;
+      return out;
     }
 
     //! Run the [Knuth-Bendix

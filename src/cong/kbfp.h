@@ -54,6 +54,7 @@ namespace libsemigroups {
     }
 
     class_index_t word_to_class_index(word_t const& word) final;
+    word_t normal_form(word_t const& word) final;
     result_t current_equals(word_t const& w1, word_t const& w2) final;
     result_t current_less_than(word_t const& w1, word_t const& w2) override;
 
