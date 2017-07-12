@@ -203,6 +203,11 @@ namespace libsemigroups {
       return w;
     }
 
+    //! Returns the rewritten version of the word_t \p w, as a word_t
+    word_t RWS::rewrite(word_t const& w) const {
+      return rws_word_to_word(rewrite(word_to_rws_word(w)));
+    }
+
     //! Run the [Knuth-Bendix
     //! algorithm](https://en.wikipedia.org/wiki/Knuth–Bendix_completion_algorithm)
     //! on the rewriting system.
