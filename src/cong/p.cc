@@ -267,6 +267,17 @@ namespace libsemigroups {
     return _class_lookup[ind_x];
   }
 
+  word_t Congruence::P::normal_form(word_t const& word) {
+    if (!is_done()) {
+      return word_t();
+    }
+    Element* elm = _cong._semigroup->word_to_element(word);
+    p_index_t ind = get_index(elm);
+    assert(ind < _reverse_map.size());
+    elm = const_cast<Element*>(_reverse_map[ind]);
+    return _cong._semigroup->factorisation(elm);
+  }
+
   Congruence::DATA::result_t Congruence::P::current_equals(word_t const& w1,
                                                            word_t const& w2) {
     if (is_done()) {
