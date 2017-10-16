@@ -10,9 +10,9 @@ FLAGS="--benchmark_min_time=0 --benchmark_report_aggregates_only=true --benchmar
 mkdir -p $LOG_DIR
 cd benchmark/src/build
 
-nr_files=$(ls -1 ../*.cpp | wc -l)
+nr_files=$(ls -1 ../mtorpey.bm.cpp | wc -l)
 i=0
-for cpp_file in ../*.cpp
+for cpp_file in ../mtorpey.bm.cpp
 do
     i=$((i+1))
     exe_file=$(echo $cpp_file | sed 's/^\.\.\///g; s/\.bm.cpp$//g')
